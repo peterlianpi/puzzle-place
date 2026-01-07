@@ -2,7 +2,6 @@ interface EmailTemplateData {
   name: string;
   email: string;
   resetToken?: string;
-  otpCode?: string;
   resetLink?: string;
   verificationLink?: string;
   actionUrl?: string;
@@ -203,28 +202,5 @@ export const emailTemplates = {
     );
   },
 
-  // OTP Verification (fallback)
-  otpVerification: ({ name, email, otpCode }: EmailTemplateData) => {
-    const content = `
-      <h2>Verification Code</h2>
-      <p>Hello ${name},</p>
-      <p>Your verification code is:</p>
 
-      <div class="code">${otpCode}</div>
-
-      <div class="warning">
-        <p><strong>Important:</strong> This code will expire in 10 minutes. Do not share this code with anyone.</p>
-      </div>
-
-      <p>If you didn't request this code, please ignore this email.</p>
-    `;
-
-    return createEmailTemplate(
-      'Verification Code',
-      '🔢',
-      content,
-      'Your Puzzle Place verification code',
-      `This email was sent to ${email}`
-    );
-  },
 };

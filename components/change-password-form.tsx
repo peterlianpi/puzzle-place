@@ -20,6 +20,21 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { useChangePassword } from "@/features/auth/api/use-change-password";
+import { PasswordWithConfirmation } from "@/components/auth/password-with-confirmation";
+
+const commonPasswords = [
+  "password",
+  "123456",
+  "123456789",
+  "qwerty",
+  "abc123",
+  "password123",
+  "admin",
+  "letmein",
+  "welcome",
+  "monkey",
+  "dragon",
+];
 
 const formSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -38,6 +53,9 @@ const formSchema = z.object({
 }).refine((data) => data.currentPassword !== data.newPassword, {
   message: "New password must be different from current password",
   path: ["newPassword"],
+}).refine((data) => !commonPasswords.includes(data.newPassword.toLowerCase()), {
+  message: "Password is too common, please choose a stronger one",
+  path: ["newPassword"],
 });
 
 export function ChangePasswordForm({
@@ -47,8 +65,6 @@ export function ChangePasswordForm({
   const router = useRouter();
   const changePasswordMutation = useChangePassword();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -117,60 +133,14 @@ export function ChangePasswordForm({
           )}
         />
 
-        <FormField
+        <PasswordWithConfirmation
           control={form.control}
-          name="newPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>New Password</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    type={showNewPassword ? "text" : "password"}
-                    {...field}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
-                    {showNewPassword ? "Hide" : "Show"}
-                  </Button>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm New Password</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    type={showConfirmPassword ? "text" : "password"}
-                    {...field}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? "Hide" : "Show"}
-                  </Button>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          passwordName="newPassword"
+          confirmPasswordName="confirmPassword"
+          watch={form.watch}
+          passwordLabel="New Password"
+          confirmPasswordLabel="Confirm New Password"
+          oldPassword={form.watch("currentPassword")}
         />
 
         <FormField

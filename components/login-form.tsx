@@ -79,8 +79,19 @@ export function LoginForm({
         onError: (ctx) => {
           setError(ctx.error.message || "Login failed. Please try again.");
         },
-        onSuccess: () => {
-          router.push("/profile");
+        onSuccess: async () => {
+          // Get user session to redirect to profile
+          const session = await authClient.getSession();
+          if (session.data?.user) {
+            const username = session.data.user.username;
+            if (username) {
+              router.push(`/@${username}`);
+            } else {
+              router.push("/profile");
+            }
+          } else {
+            router.push("/profile");
+          }
         },
       }
     );

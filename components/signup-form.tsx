@@ -15,20 +15,40 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { authClient } from "@/lib/auth/auth-client";
 import { GoogleSignInButton } from "@/components/google-signin-button";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Check, X, Loader2 } from "lucide-react";
+import { PasswordWithConfirmation } from "@/components/auth/password-with-confirmation";
+
+const commonPasswords = [
+  "password",
+  "123456",
+  "123456789",
+  "qwerty",
+  "abc123",
+  "password123",
+  "admin",
+  "letmein",
+  "welcome",
+  "monkey",
+  "dragon",
+];
 
 const formSchema = z
   .object({
     name: z.string().min(1, "Name is required"),
     email: z.email("Invalid email address"),
+    username: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .max(20, "Username must be less than 20 characters")
+      .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
@@ -47,6 +67,10 @@ const formSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
+  })
+  .refine((data) => !commonPasswords.includes(data.password.toLowerCase()), {
+    message: "Password is too common, please choose a stronger one",
+    path: ["password"],
   });
 
 export function SignupForm({
@@ -57,21 +81,86 @@ export function SignupForm({
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<{
+    checking: boolean;
+    available: boolean | null;
+  }>({ checking: false, available: null });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
+      username: "",
       password: "",
       confirmPassword: "",
       terms: false,
     },
   });
 
+  const watchedUsername = useWatch({
+    control: form.control,
+    name: "username",
+  });
+
+  useEffect(() => {
+    if (!watchedUsername || watchedUsername.length < 3) {
+      setUsernameStatus({ checking: false, available: null });
+      return;
+    }
+
+    setUsernameStatus({ checking: true, available: null });
+
+    const checkUsername = async () => {
+      try {
+        const response = await fetch("/api/auth/check-username", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: watchedUsername }),
+        });
+
+        if (response.ok) {
+          const { available } = await response.json();
+          setUsernameStatus({ checking: false, available });
+        } else {
+          setUsernameStatus({ checking: false, available: null });
+        }
+      } catch (error) {
+        console.error("Username check error:", error);
+        setUsernameStatus({ checking: false, available: null });
+      }
+    };
+
+    const timeoutId = setTimeout(checkUsername, 500); // Debounce 500ms
+    return () => clearTimeout(timeoutId);
+  }, [watchedUsername]);
+
   async function onSubmit(data: z.infer<typeof formSchema>) {
+    // Check username availability
+    try {
+      const checkResponse = await fetch("/api/auth/check-username", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: data.username }),
+      });
+
+      if (!checkResponse.ok) {
+        const error = await checkResponse.json();
+        toast.error(error.error || "Username check failed");
+        return;
+      }
+
+      const { available } = await checkResponse.json();
+      if (!available) {
+        toast.error("Username is already taken");
+        return;
+      }
+    } catch (error) {
+      console.error("Username check error:", error);
+      toast.error("Failed to check username availability");
+      return;
+    }
+
     await authClient.signUp.email(
       {
         email: data.email,
@@ -89,9 +178,28 @@ export function SignupForm({
         onError: (ctx) => {
           setError(ctx.error.message || "Signup failed. Please try again.");
         },
-        onSuccess: () => {
-          toast.success("Account created successfully!");
-          router.push("/profile");
+        onSuccess: async () => {
+          // Set the username in the database
+          try {
+            const response = await fetch("/api/auth/set-username", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username: data.username }),
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              toast.error(error.error || "Failed to set username");
+              return;
+            }
+
+            toast.success("Account created successfully!");
+            router.push("/profile");
+          } catch (error) {
+            console.error("Set username error:", error);
+            toast.error("Account created but username setup failed");
+            router.push("/profile");
+          }
         },
       }
     );
@@ -143,78 +251,49 @@ export function SignupForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
-          name="password"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Username</FormLabel>
               <FormControl>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    {...field}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOffIcon className="h-4 w-4" />
-                    ) : (
-                      <EyeIcon className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <Input placeholder="johndoe123" {...field} />
               </FormControl>
+              {watchedUsername && watchedUsername.length >= 3 && (
+                <div className="flex items-center gap-2 text-sm">
+                  {usernameStatus.checking ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <span className="text-muted-foreground">Checking availability...</span>
+                    </>
+                  ) : usernameStatus.available === true ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span className="text-green-600">Username is available</span>
+                    </>
+                  ) : usernameStatus.available === false ? (
+                    <>
+                      <X className="h-4 w-4 text-red-500" />
+                      <span className="text-red-600">Username is taken</span>
+                    </>
+                  ) : null}
+                </div>
+              )}
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
+        <PasswordWithConfirmation
           control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    id="confirm-password"
-                    placeholder="••••••••"
-                    type={showConfirmPassword ? "text" : "password"}
-                    {...field}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={
-                      showConfirmPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOffIcon className="h-4 w-4" />
-                    ) : (
-                      <EyeIcon className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          passwordName="password"
+          confirmPasswordName="confirmPassword"
+          watch={form.watch}
+          passwordLabel="Password"
+          confirmPasswordLabel="Confirm Password"
+          userName={form.watch("name")}
+          userEmail={form.watch("email")}
         />
 
         <FormField

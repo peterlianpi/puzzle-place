@@ -2,15 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -19,20 +11,44 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useResetPassword } from "@/features/auth/api/use-reset-password";
+import { PasswordWithConfirmation } from "@/components/auth/password-with-confirmation";
 
-const formSchema = z.object({
-  newPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-  confirmPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const commonPasswords = [
+  "password",
+  "123456",
+  "123456789",
+  "qwerty",
+  "abc123",
+  "password123",
+  "admin",
+  "letmein",
+  "welcome",
+  "monkey",
+  "dragon",
+];
+
+const formSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number")
+      .regex(
+        /[^A-Za-z0-9]/,
+        "Password must contain at least one special character"
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => !commonPasswords.includes(data.newPassword.toLowerCase()), {
+    message: "Password is too common, please choose a stronger one",
+    path: ["newPassword"],
+  });
 
 export function ResetPasswordForm({
   className,
@@ -55,7 +71,8 @@ export function ResetPasswordForm({
   useEffect(() => {
     if (error === "INVALID_TOKEN") {
       form.setError("root", {
-        message: "Invalid or expired reset token. Please request a new password reset.",
+        message:
+          "Invalid or expired reset token. Please request a new password reset.",
       });
     }
   }, [error, form]);
@@ -117,32 +134,13 @@ export function ResetPasswordForm({
           </div>
         )}
 
-        <FormField
+        <PasswordWithConfirmation
           control={form.control}
-          name="newPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>New Password</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm New Password</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          passwordName="newPassword"
+          confirmPasswordName="confirmPassword"
+          watch={form.watch}
+          passwordLabel="New Password"
+          confirmPasswordLabel="Confirm New Password"
         />
 
         <Button type="submit" disabled={resetPasswordMutation.isPending}>
