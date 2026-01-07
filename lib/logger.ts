@@ -1,0 +1,76 @@
+import { prisma } from "@/lib/db/prisma";
+
+export interface LogData {
+  type: "system" | "monitor" | "token" | "auth";
+  message: string;
+  userId?: string;
+  level: "info" | "warn" | "error";
+  action?: string;
+  details?: string;
+}
+
+export class Logger {
+  static async log(data: LogData) {
+    try {
+      await prisma.log.create({
+        data: {
+          type: data.type,
+          message: data.message,
+          userId: data.userId,
+          level: data.level,
+          action: data.action,
+          details: data.details,
+        },
+      });
+    } catch (error) {
+      // Fallback to console logging if database logging fails
+      console.error("Failed to log to database:", error);
+      console.log(`[${data.level.toUpperCase()}] ${data.type}: ${data.message}`);
+    }
+  }
+
+  static async info(message: string, data?: Partial<LogData>) {
+    await this.log({
+      type: "system",
+      level: "info",
+      message,
+      ...data,
+    });
+  }
+
+  static async warn(message: string, data?: Partial<LogData>) {
+    await this.log({
+      type: "monitor",
+      level: "warn",
+      message,
+      ...data,
+    });
+  }
+
+  static async error(message: string, data?: Partial<LogData>) {
+    await this.log({
+      type: "system",
+      level: "error",
+      message,
+      ...data,
+    });
+  }
+
+  static async auth(message: string, data?: Partial<LogData>) {
+    await this.log({
+      type: "auth",
+      level: "info",
+      message,
+      ...data,
+    });
+  }
+
+  static async token(message: string, data?: Partial<LogData>) {
+    await this.log({
+      type: "token",
+      level: "info",
+      message,
+      ...data,
+    });
+  }
+}

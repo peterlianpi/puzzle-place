@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "../db/prisma";
+import { sendEmail } from "../email";
+import { emailTemplates } from "../email/templates";
 // If your Prisma file is located elsewhere, you can change the path
 
 export const auth = betterAuth({
@@ -8,12 +11,115 @@ export const auth = betterAuth({
     provider: "postgresql", // or "mysql", "sqlite", ...etc
   }),
 
-  emailAndPassword: {
-    enabled: true,
-    autoSignIn: false,
+  rateLimit: {
+    window: 60 * 1000,
+    max: 10,
   },
 
-  baseURL: process.env.BETTER_AUTH_URL,
+  emailAndPassword: {
+    enabled: true,
+    // Configure password reset token expiration
+    resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours instead of default 1 hour
+    sendResetPassword: async ({ user, url, token }, request) => {
+      // Better Auth provides the API URL, but we need the frontend URL
+      // Extract token from the API URL and construct frontend URL
+      const tokenFromUrl = url.split("/reset-password/")[1]?.split("?")[0];
+      const resetLink = `${
+        process.env.BETTER_AUTH_URL || "http://localhost:3000"
+      }/reset-password?token=${tokenFromUrl || token}`;
+
+      console.log("Better Auth URL:", url); // Debug logging
+      console.log("Constructed reset link:", resetLink); // Debug logging
+      console.log("Token:", token); // Debug logging
+
+      const template = emailTemplates.passwordReset({
+        name: user.name,
+        email: user.email,
+        resetLink,
+      });
+
+      void sendEmail({
+        to: user.email,
+        subject: template.subject,
+        text: `Click the link to reset your password: ${resetLink}`,
+        html: template.html,
+      });
+    },
+    onPasswordReset: async ({ user }, request) => {
+      // Send notification email when password is changed
+      const template = emailTemplates.passwordChanged({
+        name: user.name,
+        email: user.email,
+      });
+
+      void sendEmail({
+        to: user.email,
+        subject: template.subject,
+        text: `Your Puzzle Place password has been changed. If you didn't make this change, please contact support immediately.`,
+        html: template.html,
+      });
+
+      console.log(`Password for user ${user.email} has been reset.`);
+    },
+  },
+
+  emailVerification: {
+    // Allow verification without being logged in
+    requireEmailConfirmation: true,
+    sendVerificationEmail: async ({ user, url, token }, request) => {
+      // Create frontend verification URL instead of API URL
+      const verificationLink = `${
+        process.env.BETTER_AUTH_URL || "http://localhost:3000"
+      }/verify-email?token=${token}`;
+
+      console.log("Email verification URL:", verificationLink); // Debug logging
+      console.log("Verification token:", token); // Debug logging
+
+      const template = emailTemplates.emailVerification({
+        name: user.name,
+        email: user.email,
+        verificationLink,
+      });
+
+      void sendEmail({
+        to: user.email,
+        subject: template.subject,
+        text: `Click the link to verify your email: ${verificationLink}`,
+        html: template.html,
+      });
+    },
+  },
+
+  // Enhanced session configuration for better security and performance
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    },
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+    // Additional security settings
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // HTTPS only in production
+      httpOnly: true, // Prevent XSS attacks
+      sameSite: "lax", // CSRF protection
+    },
+  },
+
+  baseURL:
+    process.env.BETTER_AUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000",
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://192.168.100.12:3000", // Your local network IP
+    ...(process.env.NEXT_PUBLIC_APP_URL
+      ? [process.env.NEXT_PUBLIC_APP_URL]
+      : []),
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+  ],
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,

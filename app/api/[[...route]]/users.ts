@@ -1,5 +1,6 @@
+import { prisma } from "@/lib/db/prisma";
 import { Hono } from "hono";
-import { prisma } from "@/lib/prisma";
+
 
 const app = new Hono()
 

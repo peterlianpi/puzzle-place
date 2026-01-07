@@ -23,6 +23,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  logs          Log[]
 
   @@unique([email])
   @@map("user")
@@ -74,4 +75,22 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  type      String   // e.g., 'system', 'monitor', 'token', 'auth'
+  message   String
+  userId    String?  // Optional foreign key to User
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  level     String   // e.g., 'info', 'warn', 'error'
+  action    String?  // e.g., 'login', 'signup', 'password_reset'
+  details   String?  // Additional JSON string details
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([level])
+  @@index([timestamp])
+  @@map("log")
 }

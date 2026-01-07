@@ -3,6 +3,7 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import users from "./users";
+// import uploadImage from "./upload-image";
 
 const app = new Hono().basePath("/api");
 
