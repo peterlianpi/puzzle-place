@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth/auth-client";
 
 export default function ProfileRedirectPage() {
   const router = useRouter();

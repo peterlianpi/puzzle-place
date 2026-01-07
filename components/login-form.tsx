@@ -22,9 +22,10 @@ import { GoogleSignInButton } from "@/components/google-signin-button";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { getSession } from "better-auth/api";
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -81,17 +82,7 @@ export function LoginForm({
         },
         onSuccess: async () => {
           // Get user session to redirect to profile
-          const session = await authClient.getSession();
-          if (session.data?.user) {
-            const username = session.data.user.username;
-            if (username) {
-              router.push(`/@${username}`);
-            } else {
-              router.push("/profile");
-            }
-          } else {
-            router.push("/profile");
-          }
+          router.push("/profile");
         },
       }
     );

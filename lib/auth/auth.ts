@@ -12,8 +12,9 @@ export const auth = betterAuth({
   }),
 
   rateLimit: {
-    window: 60 * 1000,
-    max: 10,
+    window: 60 * 1000, // 1 minute
+    max: 10, // Max 10 requests per minute for auth operations
+    storage: "database", // Store rate limit data in database
   },
 
   emailAndPassword: {
@@ -105,6 +106,8 @@ export const auth = betterAuth({
       sameSite: "lax", // CSRF protection
     },
   },
+
+
 
   baseURL:
     process.env.BETTER_AUTH_URL ||

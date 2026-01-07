@@ -9,9 +9,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Username is required" }, { status: 400 });
     }
 
+    // Sanitize and validate input
+    const sanitizedUsername = username.trim().toLowerCase();
+
+    if (sanitizedUsername.length < 3 || sanitizedUsername.length > 20) {
+      return NextResponse.json({ error: "Username must be 3-20 characters" }, { status: 400 });
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(sanitizedUsername)) {
+      return NextResponse.json({ error: "Username contains invalid characters" }, { status: 400 });
+    }
+
     // Check if username exists
     const existingUser = await prisma.user.findUnique({
-      where: { username },
+      where: { username: sanitizedUsername },
     });
 
     return NextResponse.json({ available: !existingUser });

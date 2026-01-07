@@ -30,38 +30,65 @@ export default function ProfilePage() {
   const requestedUsername = params.username as string;
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const resendVerificationMutation = useResendVerification();
-  console.log("User : ", user);
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        // Get user with username from DB
-        const response = await fetch("/api/auth/get-user");
-        if (response.ok) {
-          const { user: userData } = await response.json();
+        // First, try to get current authenticated user
+        const authResponse = await fetch("/api/auth/get-user");
+        let currentUser = null;
 
-          // Check if the requested username matches the current user's username
-          if (!userData.username || userData.username !== requestedUsername) {
-            // If username not set or doesn't match, redirect appropriately
-            if (userData.username) {
-              router.push(`/@${userData.username}`);
-            } else {
-              // Username not set, redirect to profile
-              router.push("/profile");
-            }
-            return;
-          }
+        if (authResponse.ok) {
+          const { user } = await authResponse.json();
+          currentUser = user;
+        }
+        // Note: Don't redirect on auth failure - allow public access
 
-          setUser(userData);
+        // Check if this is the current user's profile
+        if (currentUser && currentUser.username === requestedUsername) {
+          // Show editable profile for current user
+          setUser(currentUser);
+          setIsCurrentUser(true);
         } else {
-          router.push("/login");
+          // Try to get the requested user (public view)
+          const publicResponse = await fetch(`/api/users/${requestedUsername}`);
+          if (publicResponse.ok) {
+            const { user: publicUser } = await publicResponse.json();
+            setUser(publicUser);
+            setIsCurrentUser(!!currentUser && currentUser.username === requestedUsername);
+          } else if (publicResponse.status === 404) {
+            // User not found
+            router.push("/404");
+            return;
+          } else {
+            // Other error - show a generic error or fallback
+            setUser({
+              id: "error",
+              name: "User",
+              username: requestedUsername,
+              email: "",
+              emailVerified: false,
+              createdAt: new Date(),
+            } as User);
+            setIsCurrentUser(false);
+          }
         }
       } catch (error) {
         console.error("Failed to get user:", error);
-        router.push("/login");
+        // Show error state instead of redirecting
+        setUser({
+          id: "error",
+          name: "Error",
+          username: requestedUsername,
+          email: "",
+          emailVerified: false,
+          createdAt: new Date(),
+        } as User);
+        setIsCurrentUser(false);
       } finally {
         setIsLoading(false);
       }
@@ -91,7 +118,9 @@ export default function ProfilePage() {
       return;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) {
-      toast.error("Username can only contain letters, numbers, and underscores");
+      toast.error(
+        "Username can only contain letters, numbers, and underscores"
+      );
       return;
     }
     // Update username via API
@@ -139,9 +168,13 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to Puzzle Place!</CardTitle>
+          <CardTitle className="text-2xl">
+            {isCurrentUser ? "Welcome to Puzzle Place!" : `${user.name}'s Profile`}
+          </CardTitle>
           <CardDescription>
-            Your account has been created successfully
+            {isCurrentUser
+              ? "Your account has been created successfully"
+              : `View ${user.name}'s public profile`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -154,92 +187,113 @@ export default function ProfilePage() {
             <div>
               <h3 className="text-lg font-semibold">{user.name}</h3>
               <p className="text-muted-foreground">@{user.username}</p>
-              <p className="text-muted-foreground text-sm">{user.email}</p>
+              {isCurrentUser && (
+                <p className="text-muted-foreground text-sm">{user.email}</p>
+              )}
             </div>
           </div>
 
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex justify-between">
-              <span>Account Status:</span>
-              <span
-                className={
-                  user.emailVerified ? "text-green-600" : "text-yellow-600"
-                }
-              >
-                {user.emailVerified ? "Verified" : "Pending Verification"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Member Since:</span>
-              <span>{new Date(user.createdAt).toLocaleDateString()}</span>
-            </div>
-          </div>
+          {isCurrentUser ? (
+            <>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>Account Status:</span>
+                  <span
+                    className={
+                      user.emailVerified ? "text-green-600" : "text-yellow-600"
+                    }
+                  >
+                    {user.emailVerified ? "Verified" : "Pending Verification"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Member Since:</span>
+                  <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
 
-          {!user.emailVerified && (
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => resendVerificationMutation.mutate()}
-                disabled={resendVerificationMutation.isPending}
-                className="w-full"
-              >
-                {resendVerificationMutation.isPending
-                  ? "Sending..."
-                  : "Resend Verification Email"}
-              </Button>
-            </div>
-          )}
+              {!user.emailVerified && (
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => resendVerificationMutation.mutate()}
+                    disabled={resendVerificationMutation.isPending}
+                    className="w-full"
+                  >
+                    {resendVerificationMutation.isPending
+                      ? "Sending..."
+                      : "Resend Verification Email"}
+                  </Button>
+                </div>
+              )}
 
-          {editingUsername ? (
-            <div className="pt-2 space-y-2">
-              <input
-                type="text"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                placeholder="Enter new username"
-              />
-              <div className="flex gap-2">
-                <Button size="sm" onClick={handleUpdateUsername}>
-                  Save Username
+              {editingUsername ? (
+                <div className="pt-2 space-y-2">
+                  <input
+                    type="text"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    className="w-full px-3 py-2 border rounded"
+                    placeholder="Enter new username"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleUpdateUsername}>
+                      Save Username
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingUsername(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setEditingUsername(true)}
+                  >
+                    Edit Username
+                  </Button>
+                </div>
+              )}
+
+              <div className="pt-4 space-y-2">
+                <Button className="w-full" onClick={() => router.push("/")}>
+                  Go to Dashboard
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setEditingUsername(false)}>
-                  Cancel
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => router.push("/change-password")}
+                >
+                  Change Password
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleSignOut}
+                >
+                  Sign Out
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="pt-4 space-y-2 text-center">
+              <p className="text-sm text-muted-foreground">
+                Member since {new Date(user.createdAt).toLocaleDateString()}
+              </p>
+              <div className="pt-4">
+                <Button className="w-full" onClick={() => router.push("/login")}>
+                  Login to View More
                 </Button>
               </div>
             </div>
-          ) : (
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setEditingUsername(true)}
-              >
-                Edit Username
-              </Button>
-            </div>
           )}
-
-          <div className="pt-4 space-y-2">
-            <Button className="w-full" onClick={() => router.push("/")}>
-              Go to Dashboard
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => router.push("/change-password")}
-            >
-              Change Password
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleSignOut}
-            >
-              Sign Out
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
