@@ -24,7 +24,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Check, X, Loader2 } from "lucide-react";
-import { PasswordWithConfirmation } from "@/components/auth/password-with-confirmation";
+import { PasswordWithConfirmation } from "@/features/auth/components/password-with-confirmation";
 
 const commonPasswords = [
   "password",
@@ -194,11 +194,11 @@ export function SignupForm({
             }
 
             toast.success("Account created successfully!");
-            router.push("/profile");
+            router.push("/auth/profile");
           } catch (error) {
             console.error("Set username error:", error);
             toast.error("Account created but username setup failed");
-            router.push("/profile");
+            router.push("/auth/profile");
           }
         },
       }
@@ -348,7 +348,7 @@ export function SignupForm({
           <FieldDescription className="px-4 text-center">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href="/auth/login"
               className="underline underline-offset-4 hover:underline"
             >
               Sign in

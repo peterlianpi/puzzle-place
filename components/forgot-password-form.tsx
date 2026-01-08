@@ -42,7 +42,7 @@ export function ForgotPasswordForm({
       await forgotPasswordMutation.mutateAsync(data);
       // Success toast is handled by the useForgotPassword hook
       // On success, stay on page or redirect to login
-      // router.push("/login");
+      router.push("/auth/login");
     } catch (error) {
       // Error is handled by the mutation's onError callback
       console.error("Forgot password error:", error);
@@ -81,7 +81,7 @@ export function ForgotPasswordForm({
         </Button>
         <div className="text-center">
           <Link
-            href="/login"
+            href="/auth/login"
             className="text-sm underline underline-offset-4 hover:underline"
           >
             Back to login

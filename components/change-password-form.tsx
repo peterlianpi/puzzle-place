@@ -20,8 +20,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { useChangePassword } from "@/features/auth/api/use-change-password";
-import { PasswordWithConfirmation } from "@/components/auth/password-with-confirmation";
-
+import { PasswordWithConfirmation } from "@/features/auth/components/password-with-confirmation";
+ 
 const commonPasswords = [
   "password",
   "123456",
@@ -84,7 +84,7 @@ export function ChangePasswordForm({
         revokeOtherSessions: data.revokeOtherSessions,
       });
       form.reset();
-      router.push("/profile?message=password-changed");
+      router.push("/auth/profile?message=password-changed");
     } catch (error) {
       // Error is handled by the mutation's onError callback
       console.error("Change password error:", error);
@@ -172,7 +172,7 @@ export function ChangePasswordForm({
 
         <div className="text-center">
           <Link
-            href="/profile"
+            href="/auth/profile"
             className="text-sm underline underline-offset-4 hover:underline"
           >
             Back to profile

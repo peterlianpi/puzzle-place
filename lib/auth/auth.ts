@@ -27,7 +27,7 @@ export const auth = betterAuth({
       const tokenFromUrl = url.split("/reset-password/")[1]?.split("?")[0];
       const resetLink = `${
         process.env.BETTER_AUTH_URL || "http://localhost:3000"
-      }/reset-password?token=${tokenFromUrl || token}`;
+      }/auth/reset-password?token=${tokenFromUrl || token}`;
 
       console.log("Better Auth URL:", url); // Debug logging
       console.log("Constructed reset link:", resetLink); // Debug logging
@@ -113,6 +113,8 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
     "http://localhost:3000",
+  redirectToSignIn: "/auth/login",
+  redirectToSignUp: "/auth/signup",
   trustedOrigins: [
     "http://localhost:3000",
     "http://localhost:3001",

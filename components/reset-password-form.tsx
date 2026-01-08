@@ -11,7 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useResetPassword } from "@/features/auth/api/use-reset-password";
-import { PasswordWithConfirmation } from "@/components/auth/password-with-confirmation";
+import { PasswordWithConfirmation } from "@/features/auth/components/password-with-confirmation";
 
 const commonPasswords = [
   "password",
@@ -90,7 +90,7 @@ export function ResetPasswordForm({
         newPassword: data.newPassword,
         token,
       });
-      router.push("/login?message=password-reset-success");
+      router.push("/auth/login?message=password-reset-success");
     } catch (error) {
       // Error is handled by the mutation's onError callback
       console.error("Reset password error:", error);
@@ -105,7 +105,7 @@ export function ResetPasswordForm({
           This password reset link is invalid or has expired.
         </p>
         <Link
-          href="/forgot-password"
+          href="/auth/forgot-password"
           className="text-sm underline underline-offset-4 hover:underline"
         >
           Request a new password reset
@@ -149,7 +149,7 @@ export function ResetPasswordForm({
 
         <div className="text-center">
           <Link
-            href="/login"
+            href="/auth/login"
             className="text-sm underline underline-offset-4 hover:underline"
           >
             Back to login

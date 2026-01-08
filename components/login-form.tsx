@@ -82,7 +82,7 @@ export function LoginForm({
         },
         onSuccess: async () => {
           // Get user session to redirect to profile
-          router.push("/profile");
+          router.push("/auth/profile");
         },
       }
     );
@@ -161,7 +161,7 @@ export function LoginForm({
         />
         <div className="flex items-center">
           <Link
-            href="/forgot-password"
+            href="/auth/forgot-password"
             className="ml-auto text-sm underline-offset-4 hover:underline"
           >
             Forgot your password?
@@ -185,7 +185,7 @@ export function LoginForm({
           <FieldDescription className="px-6 text-center">
             Don&apos;t have an account?{" "}
             <Link
-              href="/signup"
+              href="/auth/signup"
               className="underline underline-offset-4 hover:underline"
             >
               Sign up

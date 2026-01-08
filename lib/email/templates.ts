@@ -147,7 +147,7 @@ export const emailTemplates = {
       <p>Your Puzzle Place account has been successfully created and verified. You're all set to start exploring!</p>
 
       <div style="text-align: center;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/profile" class="button">Go to Your Profile</a>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/profile" class="button">Go to Your Profile</a>
       </div>
 
       <p>Here's what you can do next:</p>
@@ -182,7 +182,7 @@ export const emailTemplates = {
       </div>
 
       <div style="text-align: center;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login" class="secondary-button">Sign In to Your Account</a>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login" class="secondary-button">Sign In to Your Account</a>
       </div>
 
       <p>For your security, we recommend:</p>

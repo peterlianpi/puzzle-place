@@ -34,7 +34,7 @@ npm install better-auth @tanstack/react-query sonner
 
 ### 1. User Registration (Signup)
 
-**File:** `app/signup/page.tsx` & `components/signup-form.tsx`
+**File:** `app/auth/signup/page.tsx` & `components/auth/signup-form.tsx`
 
 #### Features:
 - ✅ Email/password registration
@@ -59,7 +59,7 @@ npm install better-auth @tanstack/react-query sonner
 
 ### 2. User Login
 
-**File:** `app/login/page.tsx` & `components/login-form.tsx`
+**File:** `app/auth/login/page.tsx` & `components/auth/login-form.tsx`
 
 #### Features:
 - ✅ Email/password login
@@ -102,7 +102,7 @@ npm install better-auth @tanstack/react-query sonner
 
 ### 4. Password Reset
 
-**File:** `app/forgot-password/page.tsx`, `components/forgot-password-form.tsx`, `app/reset-password/page.tsx`, `components/reset-password-form.tsx`
+**File:** `app/forgot-password/page.tsx`, `components/forgot-password-form.tsx`, `app/auth/reset-password/page.tsx`, `components/auth/reset-password-form.tsx`
 
 #### Features:
 - ✅ Email-based password reset requests
@@ -124,7 +124,7 @@ npm install better-auth @tanstack/react-query sonner
 
 ### 5. Change Password (Authenticated Users)
 
-**File:** `app/change-password/page.tsx` & `components/change-password-form.tsx`
+**File:** `app/auth/change-password/page.tsx` & `components/auth/change-password-form.tsx`
 
 #### Features:
 - ✅ Current password verification
@@ -147,7 +147,7 @@ npm install better-auth @tanstack/react-query sonner
 
 ### 6. User Profile Management
 
-**File:** `app/profile/page.tsx`
+**File:** `app/auth/profile/page.tsx`
 
 #### Features:
 - ✅ Account status display (verified/unverified)
