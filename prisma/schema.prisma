@@ -14,24 +14,35 @@ datasource db {
 }
 
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
+  id            String         @id @default(cuid())
+  name          String?
+  username      String?        @unique
+  email         String         @unique
+  emailVerified Boolean?       @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   sessions      Session[]
   accounts      Account[]
+  logs          Log[]
+  verifications Verification[]
 
-  @@unique([email])
+  PasswordHash String?
+
+  // Game relations
+  createdEvents GameEvent[]
+  gameHistories GameHistory[]
+
+  @@index([username]) // Performance optimization for username lookups
+  @@index([emailVerified]) // Performance for verified user queries
+  @@index([createdAt]) // Performance for user listing by date
   @@map("user")
 }
 
 model Session {
-  id        String   @id
+  id        String   @id @default(cuid())
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -39,13 +50,12 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@index([userId])
   @@map("session")
 }
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
@@ -60,18 +70,95 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  @@unique([providerId, accountId])
   @@index([userId])
   @@map("account")
 }
 
 model Verification {
-  id         String   @id
+  id         String   @id @default(cuid())
   identifier String
   value      String
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
 
-  @@index([identifier])
+  @@unique([identifier, value])
   @@map("verification")
+}
+
+model RateLimit {
+  id          String @id @default(cuid())
+  key         String @unique
+  count       Int    @default(0)
+  lastRequest BigInt @default(0)
+
+  @@map("rateLimit")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  type      String // e.g., 'system', 'monitor', 'token', 'auth'
+  message   String
+  userId    String? // Optional foreign key to User
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  level     String // e.g., 'info', 'warn', 'error'
+  action    String? // e.g., 'login', 'signup', 'password_reset'
+  details   String? // Additional JSON string details
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([level])
+  @@index([timestamp])
+  @@map("log")
+}
+
+model GameEvent {
+  EventID       Int      @id @default(autoincrement())
+  CreatorUserID String
+  creator       User     @relation(fields: [CreatorUserID], references: [id])
+  EventName     String
+  Description   String?
+  IsActive      Boolean  @default(true)
+  CreatedAt     DateTime @default(now())
+
+  // Relations
+  prizePools    EventPrizePool[]
+  gameHistories GameHistory[]
+
+  @@index([CreatorUserID])
+  @@index([IsActive])
+  @@index([CreatedAt])
+  @@map("Tbl_GameEvent")
+}
+
+model EventPrizePool {
+  PrizeID      Int       @id @default(autoincrement())
+  EventID      Int
+  Event        GameEvent @relation(fields: [EventID], references: [EventID])
+  PrizeName    String
+  PrizeValue   Decimal   @db.Decimal(18, 2)
+  DisplayOrder Int?
+  IsBlank      Boolean   @default(false)
+
+  @@index([EventID])
+  @@map("Tbl_EventPrizePool")
+}
+
+model GameHistory {
+  HistoryID     Int       @id @default(autoincrement())
+  EventID       Int
+  Event         GameEvent @relation(fields: [EventID], references: [EventID])
+  PlayerUserID  String
+  playerUser    User      @relation(fields: [PlayerUserID], references: [id])
+  WonPrizeName  String?
+  WonPrizeValue Decimal?  @db.Decimal(18, 2)
+  PlayedAt      DateTime  @default(now())
+
+  @@index([EventID])
+  @@index([PlayerUserID])
+  @@map("Tbl_GameHistory")
 }

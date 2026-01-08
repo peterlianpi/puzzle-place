@@ -43,3 +43,5 @@ next-env.d.ts
 /lib/generated/prisma
 
 /seeds/*
+docs/PROJECT_INFO.md
+docs/SECURITY_PERFORMANCE_UPDATES.md
