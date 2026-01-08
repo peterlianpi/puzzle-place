@@ -1,6 +1,7 @@
 {
   "name": "puzzle-place",
   "version": "0.1.0",
+  "description": "A modern web application for creating and managing game events with prize pools",
   "private": true,
   "scripts": {
     "dev": "next dev",

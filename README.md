@@ -4,13 +4,14 @@ A modern web application for creating and managing game events with prize pools.
 
 ## Features
 
-- 🔐 **Authentication**: Email/password and Google OAuth
-- 🎮 **Game Events**: Create, view, and edit prize-based events
-- 🏆 **Prize Pools**: Configurable prize systems with editing support
-- 📊 **Dashboard**: User activity tracking
-- 🎨 **Modern UI**: Responsive design with reusable components
-- 🚀 **Performance**: Optimized with caching and pagination
-- 🔒 **Security**: CSP, HSTS, secure headers, and user ownership validation
+- 🔐 **Authentication**: Secure email/password and Google OAuth login
+- 🎮 **Game Events**: Create, view, edit, and manage prize-based events
+- 🏆 **Prize Pools**: Fully configurable prize systems with real-time editing
+- 📊 **User Management**: Personal event dashboard and activity tracking
+- 🎨 **Modern UI**: Fully responsive design with reusable components
+- 🚀 **Performance**: Optimized with caching, pagination, and skeleton loading
+- 🔒 **Security**: Comprehensive security with CSP, HSTS, rate limiting, and ownership validation
+- 📱 **Mobile-First**: Optimized for all devices with touch-friendly interactions
 - 📱 **Mobile Friendly**: Fully responsive across all devices
 
 ## Technology Stack
