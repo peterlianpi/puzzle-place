@@ -71,7 +71,7 @@ export const auth = betterAuth({
       // Create frontend verification URL instead of API URL
       const verificationLink = `${
         process.env.BETTER_AUTH_URL || "http://localhost:3000"
-      }/verify-email?token=${token}`;
+      }/auth/verify-email?token=${token}`;
 
       console.log("Email verification URL:", verificationLink); // Debug logging
       console.log("Verification token:", token); // Debug logging

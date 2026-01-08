@@ -57,7 +57,7 @@ export default function PublicEventsPage() {
     );
   }
 
-  const events = data.events;
+  const events = data.events || [];
 
   return <EventList title="Events" events={events} baseUrl="/events" isLoading={isLoading} />;
 }

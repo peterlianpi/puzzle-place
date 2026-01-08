@@ -52,7 +52,7 @@ export default function GameEventsPage() {
     );
   }
 
-  const events = data.events;
+  const events = data.events || [];
 
   return (
     <EventList
