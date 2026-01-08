@@ -1,15 +1,12 @@
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth/auth";
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import z from "zod";
 
 const app = new Hono()
 
   .get("/", async (c) => {
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session?.user?.id) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
     const limit = parseInt(c.req.query("limit") || "20");
     const offset = parseInt(c.req.query("offset") || "0");
 
@@ -31,13 +28,24 @@ const app = new Hono()
       skip: offset,
     });
 
+    // Ensure all data is properly formatted
+    const safeEvents = events.map((event) => ({
+      ...event,
+      Description: event.Description || null,
+      prizePools: event.prizePools.map((prize) => ({
+        ...prize,
+        PrizeValue: prize.PrizeValue?.toString() || "0",
+        DisplayOrder: prize.DisplayOrder || 0,
+      })),
+    }));
+
     const total = await prisma.gameEvent.count({
       where: { IsActive: true },
     });
 
     return c.json(
       {
-        events,
+        events: safeEvents,
         pagination: {
           limit,
           offset,
@@ -52,42 +60,59 @@ const app = new Hono()
       }
     );
   })
-  .get("/:id", async (c) => {
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session?.user?.id) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+  .get(
+    "/:id",
+    zValidator(
+      "param",
+      z.object({
+        id: z.number(), // ID parameter validation
+      })
+    ),
+    async (c) => {
+      const { id } = c.req.valid("param"); // Extract account ID from URL params
 
-    const id = parseInt(c.req.param("id"));
-    if (isNaN(id)) {
-      return c.json({ error: "Invalid ID" }, 400);
-    }
+      if (isNaN(id)) {
+        return c.json({ error: "Invalid ID" }, 400);
+      }
 
-    const event = await prisma.gameEvent.findFirst({
-      where: { EventID: id, IsActive: true },
-      include: {
-        prizePools: {
-          select: {
-            PrizeID: true,
-            PrizeName: true,
-            PrizeValue: true,
-            DisplayOrder: true,
-            IsBlank: true,
+      const event = await prisma.gameEvent.findFirst({
+        where: { EventID: id, IsActive: true },
+        include: {
+          prizePools: {
+            select: {
+              PrizeID: true,
+              PrizeName: true,
+              PrizeValue: true,
+              DisplayOrder: true,
+              IsBlank: true,
+            },
           },
         },
-      },
-    });
-    if (!event) {
-      return c.json({ error: "Event not found" }, 404);
-    }
-    return c.json(
-      { event },
-      {
-        headers: {
-          "Cache-Control": "public, max-age=600", // Cache for 10 minutes
-        },
+      });
+      if (!event) {
+        return c.json({ error: "Event not found" }, 404);
       }
-    );
-  });
+
+      // Ensure all data is properly formatted
+      const safeEvent = {
+        ...event,
+        Description: event.Description || null,
+        prizePools: event.prizePools.map((prize) => ({
+          ...prize,
+          PrizeValue: prize.PrizeValue?.toString() || "0",
+          DisplayOrder: prize.DisplayOrder || 0,
+        })),
+      };
+
+      return c.json(
+        { event: safeEvent },
+        {
+          headers: {
+            "Cache-Control": "public, max-age=600", // Cache for 10 minutes
+          },
+        }
+      );
+    }
+  );
 
 export default app;

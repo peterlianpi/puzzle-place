@@ -13,7 +13,7 @@ const app = new Hono()
         select: {
           id: true,
           name: true,
-          email: true,
+          username: true,
           createdAt: true,
           image: true,
         },

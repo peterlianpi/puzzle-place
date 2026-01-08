@@ -138,7 +138,7 @@ export default function GameEventDetailPage() {
                         )}
                       </div>
                       <span className="font-bold text-lg">
-                        ${parseFloat(prize.PrizeValue).toFixed(2)}
+                        ${parseFloat(prize.PrizeValue || '0').toFixed(2)}
                       </span>
                     </div>
                   ))}
@@ -171,7 +171,7 @@ export default function GameEventDetailPage() {
               <div className="text-sm">
                 Total Value: $
                 {event.prizePools.reduce(
-                  (sum, prize) => sum + parseFloat(prize.PrizeValue),
+                  (sum, prize) => sum + parseFloat(prize.PrizeValue || '0'),
                   0
                 ).toFixed(2)}
               </div>

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function ProfileRedirectPage() {
   const router = useRouter();
@@ -32,11 +33,28 @@ export default function ProfileRedirectPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <motion.div
+      className="min-h-screen flex items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+    >
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Redirecting to your profile...</p>
+        <motion.div
+          className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        ></motion.div>
+        <motion.p
+          className="text-muted-foreground"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          Redirecting to your profile...
+        </motion.p>
       </div>
-    </div>
+    </motion.div>
   );
 }

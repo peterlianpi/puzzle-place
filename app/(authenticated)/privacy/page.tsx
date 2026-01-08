@@ -1,8 +1,33 @@
 
+'use client';
+
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
+
 export default function PrivacyPage() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
+    <motion.div
+      className="container mx-auto px-4 py-8 max-w-4xl"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <Link href="/">
+        <Button variant="ghost" className="mb-8">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Button>
+      </Link>
+      <motion.h1
+        className="text-3xl font-bold mb-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        Privacy Policy
+      </motion.h1>
 
       <div className="prose prose-gray max-w-none">
         <p className="text-muted-foreground mb-6">
@@ -49,6 +74,6 @@ export default function PrivacyPage() {
       </div>
 
       <div className="mt-8 pt-8 border-t"></div>
-    </div>
+    </motion.div>
   );
 }

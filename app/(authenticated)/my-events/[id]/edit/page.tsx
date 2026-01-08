@@ -57,7 +57,7 @@ export default function EditEventPage() {
     description: event.Description || "",
     prizes: event.prizePools.map((prize) => ({
       name: prize.PrizeName,
-      value: parseFloat(prize.PrizeValue),
+      value: parseFloat(prize.PrizeValue || '0'),
       isBlank: prize.IsBlank,
     })),
   };
