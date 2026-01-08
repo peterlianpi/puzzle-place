@@ -1,4 +1,5 @@
 import { hc } from "hono/client";
 import { AppType } from "@/app/api/[[...route]]/route";
 
-export const client = hc<AppType>(process.env.NEXT_PUBLIC_APP_URL!);
+// Use empty string for same-origin API calls (works on Vercel and local)
+export const client = hc<AppType>("");

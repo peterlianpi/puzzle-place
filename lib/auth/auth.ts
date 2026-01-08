@@ -13,7 +13,7 @@ export const auth = betterAuth({
 
   rateLimit: {
     window: 60 * 1000, // 1 minute
-    max: 10, // Max 10 requests per minute for auth operations
+    max: 100, // Increased to allow more frequent session checks
     storage: "database", // Store rate limit data in database
   },
 

@@ -8,14 +8,12 @@ import ErrorMessage from "@/components/ErrorMessage";
 export default function PublicEventsPage() {
   const { data, isLoading, error } = useGetEvents({ limit: 20, offset: 0 });
 
-
-
   if (isLoading) {
     return <LoadingSpinner size="lg" text="Loading events..." />;
   }
 
   if (error) {
-    console.error('Events fetch error:', error);
+    console.error("Events fetch error:", error);
     return (
       <ErrorMessage
         title="Error loading events"
@@ -47,5 +45,12 @@ export default function PublicEventsPage() {
 
   const events = data.events || [];
 
-  return <EventList title="Events" events={events} baseUrl="/events" isLoading={isLoading} />;
+  return (
+    <EventList
+      title="Events"
+      events={events}
+      baseUrl="/events"
+      isLoading={isLoading}
+    />
+  );
 }
