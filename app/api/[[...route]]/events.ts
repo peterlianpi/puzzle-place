@@ -20,67 +20,68 @@ const app = new Hono()
       const limit = parseInt(limitStr);
       const offset = parseInt(offsetStr);
 
-     const events = await prisma.gameEvent.findMany({
-      where: { IsActive: true },
-      include: {
-        prizePools: {
-          select: {
-            PrizeID: true,
-            PrizeName: true,
-            PrizeValue: true,
-            DisplayOrder: true,
-            IsBlank: true,
+      const events = await prisma.gameEvent.findMany({
+        where: { IsActive: true },
+        include: {
+          prizePools: {
+            select: {
+              PrizeID: true,
+              PrizeName: true,
+              PrizeValue: true,
+              DisplayOrder: true,
+              IsBlank: true,
+            },
           },
         },
-      },
-      orderBy: { CreatedAt: "desc" },
-      take: limit,
-      skip: offset,
-    });
+        orderBy: { CreatedAt: "desc" },
+        take: limit,
+        skip: offset,
+      });
 
-    // Ensure all data is properly formatted
-    const safeEvents = events.map((event) => ({
-      ...event,
-      Description: event.Description || null,
-      prizePools: event.prizePools.map((prize) => ({
-        ...prize,
-        PrizeValue: prize.PrizeValue?.toString() || "0",
-        DisplayOrder: prize.DisplayOrder || 0,
-      })),
-    }));
+      // Ensure all data is properly formatted
+      const safeEvents = events.map((event) => ({
+        ...event,
+        Description: event.Description || null,
+        prizePools: event.prizePools.map((prize) => ({
+          ...prize,
+          PrizeValue: prize.PrizeValue?.toString() || "0",
+          DisplayOrder: prize.DisplayOrder || 0,
+        })),
+      }));
 
-    const total = await prisma.gameEvent.count({
-      where: { IsActive: true },
-    });
+      const total = await prisma.gameEvent.count({
+        where: { IsActive: true },
+      });
 
-    return c.json(
-      {
-        events: safeEvents,
-        pagination: {
-          limit,
-          offset,
-          total,
-          hasMore: offset + limit < total,
+      return c.json(
+        {
+          events: safeEvents,
+          pagination: {
+            limit,
+            offset,
+            total,
+            hasMore: offset + limit < total,
+          },
         },
-      },
-      {
-        headers: {
-          "Cache-Control": "public, max-age=300", // Cache for 5 minutes
-        },
-      }
-    );
-  })
+        {
+          headers: {
+            "Cache-Control": "public, max-age=300", // Cache for 5 minutes
+          },
+        }
+      );
+    }
+  )
   .get(
     "/:id",
     zValidator(
       "param",
       z.object({
-        id: z.number(), // ID parameter validation
+        id: z.string(), // ID parameter validation
       })
     ),
     async (c) => {
-      const { id } = c.req.valid("param"); // Extract account ID from URL params
-
+      const { id: param } = c.req.valid("param"); // Extract account ID from URL params
+      const id = parseInt(param);
       if (isNaN(id)) {
         return c.json({ error: "Invalid ID" }, 400);
       }
