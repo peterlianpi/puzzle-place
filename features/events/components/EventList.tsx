@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LayoutGrid, List, TrendingUp, Plus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PrizePool {
   PrizeID: number;
@@ -29,6 +30,7 @@ interface EventListProps {
   baseUrl: string; // "/events" or "/my-events"
   showCreateButton?: boolean;
   showEditButtons?: boolean;
+  isLoading?: boolean;
 }
 
 export default function EventList({
@@ -36,7 +38,8 @@ export default function EventList({
   events,
   baseUrl,
   showCreateButton = false,
-  showEditButtons = false
+  showEditButtons = false,
+  isLoading = false
 }: EventListProps) {
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
   const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
@@ -58,6 +61,27 @@ export default function EventList({
     }
     return new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime();
   });
+
+  const renderSkeletonCards = () => (
+    <>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Card key={i} className="shadow-md">
+          <CardHeader>
+            <Skeleton className="h-6 w-3/4" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-2/3 mb-4" />
+            <div className="flex justify-between items-center mb-4">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <Skeleton className="h-9 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -97,7 +121,11 @@ export default function EventList({
         </div>
       </div>
 
-      {!sortedEvents || sortedEvents.length === 0 ? (
+      {isLoading && sortedEvents.length === 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {renderSkeletonCards()}
+        </div>
+      ) : !sortedEvents || sortedEvents.length === 0 ? (
         <p>
           No events found.{" "}
           {showCreateButton && (

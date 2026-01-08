@@ -27,7 +27,7 @@ export default function PublicEventsPage() {
         <div className="flex flex-col items-center gap-4">
           <p className="text-red-600 text-lg">Error loading events</p>
           <p className="text-gray-600">
-            {error.message || "Please try again later"}
+            {error?.message || "Please try again later"}
           </p>
         </div>
       </div>
@@ -59,5 +59,5 @@ export default function PublicEventsPage() {
 
   const events = data.events;
 
-  return <EventList title="Events" events={events} baseUrl="/events" />;
+  return <EventList title="Events" events={events} baseUrl="/events" isLoading={isLoading} />;
 }
