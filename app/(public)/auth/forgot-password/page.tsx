@@ -32,12 +32,12 @@ export default function ForgotPasswordPage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
       >
-        <Image
+      <Image
           width={100}
           height={100}
-          src="/placeholder.svg"
+          src="/logo.jpg"
           alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+          className="absolute inset-0 h-80 w-96 lef c-1/4 top-1/4 object-cover dark:brightness-[0.2] dark:grayscale"
         />
       </motion.div>
     </div>
