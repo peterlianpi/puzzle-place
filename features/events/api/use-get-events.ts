@@ -9,10 +9,11 @@ type ResponseType = InferResponseType<
 type UseGetEventsOptions = {
   limit?: number;
   offset?: number;
+  enabled?: boolean;
 };
 
 export const useGetEvents = (options: UseGetEventsOptions = {}) => {
-  const { limit = 20, offset = 0 } = options;
+  const { limit = 20, offset = 0, enabled = true } = options;
 
   const query = useQuery<ResponseType>({
     queryKey: ["events", limit, offset],
@@ -25,6 +26,7 @@ export const useGetEvents = (options: UseGetEventsOptions = {}) => {
       });
       return await response.json();
     },
+    enabled,
   });
   return query;
 };

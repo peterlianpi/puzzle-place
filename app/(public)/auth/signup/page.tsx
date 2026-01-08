@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { GalleryVerticalEnd } from "lucide-react";
 import { SignupForm } from "@/components/signup-form";
+import { AuthBranding } from "@/components/auth/AuthBranding";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
@@ -14,30 +14,7 @@ export default function SignupPage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <motion.div
-          className="flex justify-center gap-2 md:justify-start"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <a href="#" className="flex items-center gap-2 font-medium">
-            <motion.div
-              className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.4 }}
-            >
-              <GalleryVerticalEnd className="size-4" />
-            </motion.div>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              Puzzle Place
-            </motion.span>
-          </a>
-        </motion.div>
+        <AuthBranding />
         <motion.div
           className="flex flex-1 items-center justify-center"
           initial={{ opacity: 0, y: 50 }}

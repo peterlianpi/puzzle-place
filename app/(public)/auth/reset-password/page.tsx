@@ -16,7 +16,7 @@ export default function ResetPasswordPage() {
         transition={{ duration: 0.6 }}
       >
         <motion.div
-          className="flex justify-center gap-2 md:justify-start"
+          className="flex justify-center gap-2 "
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}

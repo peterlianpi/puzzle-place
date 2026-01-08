@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -12,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetEvents } from "@/features/events/api/use-get-events";
+import { usePerformance } from "@/hooks/use-performance";
 
 type EventData = {
   Description: string | null;
@@ -29,20 +31,67 @@ type EventData = {
   CreatedAt: string;
 };
 
-export default function PopularEvents() {
-  const { data: eventsData, isLoading } = useGetEvents({ limit: 4 });
+// Static placeholder events for slow connections
+const staticEvents = [
+  {
+    id: 1,
+    title: "Puzzle Master Challenge",
+    description: "Test your puzzle-solving skills in this ultimate challenge!",
+    date: "2024-01-15",
+    location: "Online",
+    image: "https://picsum.photos/400/250?random=1",
+  },
+  {
+    id: 2,
+    title: "Trivia Night Special",
+    description: "Show off your knowledge in our weekly trivia event.",
+    date: "2024-01-20",
+    location: "Online",
+    image: "https://picsum.photos/400/250?random=2",
+  },
+  {
+    id: 3,
+    title: "Strategy Showdown",
+    description: "Battle it out in strategic games with amazing prizes.",
+    date: "2024-01-25",
+    location: "Online",
+    image: "https://picsum.photos/400/250?random=3",
+  },
+  {
+    id: 4,
+    title: "Quick Quiz Tournament",
+    description: "Fast-paced quiz competition for quick thinkers.",
+    date: "2024-01-30",
+    location: "Online",
+    image: "https://picsum.photos/400/250?random=4",
+  },
+];
 
-  const events =
-    eventsData?.events.slice(0, 4).map((event: EventData) => ({
-      id: event.EventID,
-      title: event.EventName,
-      description: event.Description || "Exciting game event!",
-      date: new Date(event.CreatedAt).toLocaleDateString(),
-      location: "Online",
-      image: `https://via.placeholder.com/400x250?text=${encodeURIComponent(
-        event.EventName
-      )}`,
-    })) || [];
+export default function PopularEvents() {
+  const { enableApiCalls, imageQuality } = usePerformance();
+
+  const { data: eventsData, isLoading } = useGetEvents(
+    enableApiCalls ? { limit: 4 } : { enabled: false }
+  );
+
+  const events = enableApiCalls
+    ? eventsData?.events.slice(0, 4).map((event: EventData) => ({
+        id: event.EventID,
+        title: event.EventName,
+        description: event.Description || "Exciting game event!",
+        date: new Date(event.CreatedAt).toLocaleDateString(),
+        location: "Online",
+        image:
+          imageQuality === "low"
+            ? `https://picsum.photos/200/150?random=${event.EventID % 100}`
+            : `https://picsum.photos/400/250?random=${event.EventID % 100}`,
+      })) || []
+    : staticEvents.map(event => ({
+        ...event,
+        image: imageQuality === "low"
+          ? event.image.replace('/400/250', '/200/150')
+          : event.image,
+      }));
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -102,10 +151,15 @@ export default function PopularEvents() {
               <Link href={`/events/${event.id}`}>
                 <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                   <CardHeader>
-                    <img
+                    <Image
                       src={event.image}
                       alt={event.title}
+                      width={400}
+                      height={250}
                       className="w-full h-48 object-cover rounded-t-lg"
+                      priority={false}
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+IRjWjBqO6O2mhP//Z"
                     />
                   </CardHeader>
                   <CardContent className="p-4">
