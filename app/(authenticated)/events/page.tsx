@@ -6,13 +6,16 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 
 export default function PublicEventsPage() {
-  const { data, isLoading, error } = useGetEvents();
+  const { data, isLoading, error } = useGetEvents({ limit: 20, offset: 0 });
+
+
 
   if (isLoading) {
     return <LoadingSpinner size="lg" text="Loading events..." />;
   }
 
   if (error) {
+    console.error('Events fetch error:', error);
     return (
       <ErrorMessage
         title="Error loading events"

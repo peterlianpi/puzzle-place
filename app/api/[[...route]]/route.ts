@@ -5,7 +5,6 @@ import { handle } from "hono/vercel";
 import users from "./users";
 import events from "./events";
 import myEvents from "./my-events";
-import prizes from "./prizes";
 // import uploadImage from "./upload-image";
 
 const app = new Hono().basePath("/api");
@@ -15,7 +14,6 @@ const routes = app
   .route("/users", users)
   .route("/events", events)
   .route("/my-events", myEvents)
-  .route("/prizes", prizes);
 
 export const GET = handle(app);
 export const POST = handle(app);

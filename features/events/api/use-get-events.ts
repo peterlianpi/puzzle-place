@@ -6,11 +6,23 @@ type ResponseType = InferResponseType<
   (typeof client.api)["events"]["$get"]
 >;
 
-export const useGetEvents = () => {
+type UseGetEventsOptions = {
+  limit?: number;
+  offset?: number;
+};
+
+export const useGetEvents = (options: UseGetEventsOptions = {}) => {
+  const { limit = 20, offset = 0 } = options;
+
   const query = useQuery<ResponseType>({
-    queryKey: ["events"],
+    queryKey: ["events", limit, offset],
     queryFn: async () => {
-      const response = await client.api["events"]["$get"]();
+      const response = await client.api["events"]["$get"]({
+        query: {
+          limit: limit.toString(),
+          offset: offset.toString(),
+        },
+      });
       return await response.json();
     },
   });

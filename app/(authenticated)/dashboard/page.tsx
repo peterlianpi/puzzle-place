@@ -58,7 +58,7 @@ const notifications = [
 ];
 
 export default function DashboardPage() {
-  const { data: eventsData, isLoading: eventsLoading } = useGetEvents();
+  const { data: eventsData, isLoading: eventsLoading } = useGetEvents({ limit: 4 });
 
   const upcomingEvents = eventsData?.events.slice(0, 4).map(event => ({
     id: event.EventID,

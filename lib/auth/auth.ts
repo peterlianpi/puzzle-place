@@ -29,9 +29,7 @@ export const auth = betterAuth({
         process.env.BETTER_AUTH_URL || "http://localhost:3000"
       }/auth/reset-password?token=${tokenFromUrl || token}`;
 
-      console.log("Better Auth URL:", url); // Debug logging
-      console.log("Constructed reset link:", resetLink); // Debug logging
-      console.log("Token:", token); // Debug logging
+    
 
       const template = emailTemplates.passwordReset({
         name: user.name,
@@ -60,7 +58,6 @@ export const auth = betterAuth({
         html: template.html,
       });
 
-      console.log(`Password for user ${user.email} has been reset.`);
     },
   },
 
@@ -73,9 +70,7 @@ export const auth = betterAuth({
         process.env.BETTER_AUTH_URL || "http://localhost:3000"
       }/auth/verify-email?token=${token}`;
 
-      console.log("Email verification URL:", verificationLink); // Debug logging
-      console.log("Verification token:", token); // Debug logging
-
+   
       const template = emailTemplates.emailVerification({
         name: user.name,
         email: user.email,

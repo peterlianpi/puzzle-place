@@ -4,7 +4,7 @@ import { useGetGameEvents } from "@/features/my-events/api/use-get-game-events";
 import EventList from "@/features/events/components/EventList";
 
 export default function GameEventsPage() {
-  const { data, isLoading, error } = useGetGameEvents();
+  const { data, isLoading, error } = useGetGameEvents({ limit: 20, offset: 0 });
 
   if (isLoading) {
     return (

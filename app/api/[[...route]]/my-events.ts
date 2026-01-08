@@ -90,15 +90,25 @@ const app = new Hono()
 
     return c.json({ eventId: event.EventID }, 201);
   })
-  .get("/", async (c) => {
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session?.user?.id) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+  .get(
+    "/",
+    zValidator(
+      "query",
+      z.object({
+        limit: z.string().optional().default("20"),
+        offset: z.string().optional().default("0"),
+      })
+    ),
+    async (c) => {
+      const session = await auth.api.getSession({ headers: c.req.raw.headers });
+      if (!session?.user?.id) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
 
-    const userId = session.user.id;
-    const limit = parseInt(c.req.query("limit") || "20");
-    const offset = parseInt(c.req.query("offset") || "0");
+      const userId = session.user.id;
+      const { limit: limitStr, offset: offsetStr } = c.req.valid("query");
+      const limit = parseInt(limitStr);
+      const offset = parseInt(offsetStr);
 
     const events = await prisma.gameEvent.findMany({
       where: { IsActive: true, CreatorUserID: userId },

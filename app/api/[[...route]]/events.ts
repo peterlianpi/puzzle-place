@@ -6,11 +6,21 @@ import z from "zod";
 
 const app = new Hono()
 
-  .get("/", async (c) => {
-    const limit = parseInt(c.req.query("limit") || "20");
-    const offset = parseInt(c.req.query("offset") || "0");
+  .get(
+    "/",
+    zValidator(
+      "query",
+      z.object({
+        limit: z.string().optional().default("20"),
+        offset: z.string().optional().default("0"),
+      })
+    ),
+    async (c) => {
+      const { limit: limitStr, offset: offsetStr } = c.req.valid("query");
+      const limit = parseInt(limitStr);
+      const offset = parseInt(offsetStr);
 
-    const events = await prisma.gameEvent.findMany({
+     const events = await prisma.gameEvent.findMany({
       where: { IsActive: true },
       include: {
         prizePools: {

@@ -30,7 +30,7 @@ type EventData = {
 };
 
 export default function PopularEvents() {
-  const { data: eventsData, isLoading } = useGetEvents();
+  const { data: eventsData, isLoading } = useGetEvents({ limit: 4 });
 
   const events =
     eventsData?.events.slice(0, 4).map((event: EventData) => ({

@@ -34,7 +34,7 @@ function VerifyEmailContent() {
           return;
         }
 
-        console.log("Verifying email with token:", token);
+    
 
         // Use Better Auth's verifyEmail method with the token
         const result = await authClient.verifyEmail({
@@ -51,8 +51,7 @@ function VerifyEmailContent() {
               "Failed to verify email. The link may have expired."
           );
         } else {
-          console.log("Email verification successful");
-          toast.success(
+         toast.success(
             "Email verified successfully! Welcome to Puzzle Place!",
             {
               duration: 5000,
