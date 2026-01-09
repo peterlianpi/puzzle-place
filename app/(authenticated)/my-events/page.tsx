@@ -10,8 +10,8 @@ export default function GameEventsPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="text-lg text-gray-600 animate-pulse">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-lg text-muted-foreground animate-pulse">
             Loading events...
           </p>
         </div>
@@ -23,8 +23,8 @@ export default function GameEventsPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-red-600 text-lg">Error loading events</p>
-          <p className="text-gray-600">
+          <p className="text-destructive text-lg">Error loading events</p>
+          <p className="text-muted-foreground">
             {error?.message || "Please try again later"}
           </p>
         </div>
@@ -36,7 +36,7 @@ export default function GameEventsPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-gray-600">No data available</p>
+          <p className="text-muted-foreground">No data available</p>
         </div>
       </div>
     );
@@ -46,7 +46,7 @@ export default function GameEventsPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-red-600 text-lg">Error: {data.error}</p>
+          <p className="text-destructive text-lg">Error: {data.error}</p>
         </div>
       </div>
     );

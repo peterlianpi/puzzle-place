@@ -141,7 +141,7 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
         {
           <div>
             <FormLabel>Prizes</FormLabel>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Add prizes sorted from highest to lowest value. At least 5 prizes
               required, with at least 1 non-blank prize.
             </p>
@@ -219,7 +219,7 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
             </div>
             {form.formState.errors.prizes &&
               typeof form.formState.errors.prizes.message === "string" && (
-                <p className="text-red-500 text-sm">
+                <p className="text-destructive text-sm">
                   {form.formState.errors.prizes.message}
                 </p>
               )}

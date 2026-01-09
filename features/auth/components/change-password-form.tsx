@@ -21,7 +21,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useChangePassword } from "@/features/auth/api/use-change-password";
 import { PasswordWithConfirmation } from "@/features/auth/components/password-with-confirmation";
- 
+
 const commonPasswords = [
   "password",
   "123456",
@@ -36,27 +36,34 @@ const commonPasswords = [
   "dragon",
 ];
 
-const formSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-  confirmPassword: z.string(),
-  revokeOtherSessions: z.boolean(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-}).refine((data) => data.currentPassword !== data.newPassword, {
-  message: "New password must be different from current password",
-  path: ["newPassword"],
-}).refine((data) => !commonPasswords.includes(data.newPassword.toLowerCase()), {
-  message: "Password is too common, please choose a stronger one",
-  path: ["newPassword"],
-});
+const formSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number")
+      .regex(
+        /[^A-Za-z0-9]/,
+        "Password must contain at least one special character"
+      ),
+    confirmPassword: z.string(),
+    revokeOtherSessions: z.boolean(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "New password must be different from current password",
+    path: ["newPassword"],
+  })
+  .refine((data) => !commonPasswords.includes(data.newPassword.toLowerCase()), {
+    message: "Password is too common, please choose a stronger one",
+    path: ["newPassword"],
+  });
 
 export function ChangePasswordForm({
   className,
@@ -114,6 +121,7 @@ export function ChangePasswordForm({
               <FormControl>
                 <div className="relative">
                   <Input
+                    placeholder="••••••••"
                     type={showCurrentPassword ? "text" : "password"}
                     {...field}
                   />
@@ -159,7 +167,8 @@ export function ChangePasswordForm({
                   Sign out of all other devices
                 </FormLabel>
                 <p className="text-xs text-muted-foreground">
-                  This will sign you out of all other devices where you&apos;re currently logged in.
+                  This will sign you out of all other devices where you&apos;re
+                  currently logged in.
                 </p>
               </div>
             </FormItem>

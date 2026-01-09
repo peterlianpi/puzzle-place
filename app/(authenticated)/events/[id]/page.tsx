@@ -16,7 +16,7 @@ export default function PublicEventPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -25,8 +25,10 @@ export default function PublicEventPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-red-600 text-lg">Error loading event</p>
-          <p className="text-gray-600">Event not found or an error occurred.</p>
+          <p className="text-destructive text-lg">Error loading event</p>
+          <p className="text-muted-foreground">
+            Event not found or an error occurred.
+          </p>
           <Link href="/events">
             <Button>Back to Events</Button>
           </Link>
@@ -39,7 +41,7 @@ export default function PublicEventPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-red-600 text-lg">Error: {data.error}</p>
+          <p className="text-destructive text-lg">Error: {data.error}</p>
           <Link href="/events">
             <Button>Back to Events</Button>
           </Link>
@@ -60,10 +62,10 @@ export default function PublicEventPage() {
             </Button>
           </Link>
           <h1 className="text-4xl font-bold">{event.EventName}</h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             {event.Description || "No description"}
           </p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Created:{" "}
             {new Date(event.CreatedAt).toLocaleDateString("en-US", {
               year: "numeric",
@@ -88,11 +90,11 @@ export default function PublicEventPage() {
                     </Badge>
                   </div>
                   {!prize.IsBlank && (
-                    <p className="text-lg font-bold text-green-600">
+                    <p className="text-lg font-bold text-primary">
                       ${prize.PrizeValue}
                     </p>
                   )}
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Order: {prize.DisplayOrder}
                   </p>
                 </div>

@@ -1,18 +1,19 @@
 import nodemailer from "nodemailer";
+import { Logger } from "@/lib/logger";
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-  port: parseInt(process.env.SMTP_PORT || '587'),
+  host: process.env.SMTP_HOST || "smtp.ethereal.email",
+  port: parseInt(process.env.SMTP_PORT || "587"),
   secure: false,
   auth: {
-    user: process.env.SMTP_USER || 'your-ethereal-user@ethereal.email',
-    pass: process.env.SMTP_PASS || 'your-ethereal-password',
+    user: process.env.SMTP_USER || "your-ethereal-user@ethereal.email",
+    pass: process.env.SMTP_PASS || "your-ethereal-password",
   },
   tls: {
     rejectUnauthorized: false,
   },
-  debug: process.env.NODE_ENV === 'development', // Enable debug in development
-  logger: process.env.NODE_ENV === 'development',
+  debug: process.env.NODE_ENV === "development", // Enable debug in development
+  logger: process.env.NODE_ENV === "development",
 });
 
 export async function sendEmail({
@@ -27,11 +28,12 @@ export async function sendEmail({
   html?: string;
 }) {
   if (!process.env.SMTP_FROM) {
-    const errorMsg = 'SMTP_FROM environment variable is not set. Please set it to a valid email address.';
-    console.error(errorMsg);
+    const errorMsg =
+      "SMTP_FROM environment variable is not set. Please set it to a valid email address.";
+    await Logger.error(errorMsg);
     throw new Error(errorMsg);
   }
-  console.log(`Attempting to send email to: ${to}, subject: ${subject}`);
+  await Logger.info(`Attempting to send email to: ${to}, subject: ${subject}`);
   try {
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM,
@@ -40,9 +42,11 @@ export async function sendEmail({
       text,
       html,
     });
-    console.log(`Email sent successfully to: ${to}, messageId: ${info.messageId}`);
+    await Logger.info(
+      `Email sent successfully to: ${to}, messageId: ${info.messageId}`
+    );
   } catch (error) {
-    console.error(`Error sending email to ${to}:`, error);
+    await Logger.error(`Error sending email to ${to}`, { details: JSON.stringify(error) });
     throw error;
   }
 }

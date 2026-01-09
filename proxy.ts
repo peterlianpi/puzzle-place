@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth/auth";
+import { Logger } from "@/lib/logger";
 
 // Protected routes requiring authentication
 const protectedRoutes = [
@@ -22,28 +23,29 @@ export async function proxy(request: NextRequest) {
 
   // Auth checks first - before creating response
   try {
-    console.log(`Middleware: Checking session for ${pathname}`);
+    await Logger.info(`Middleware: Checking session for ${pathname}`);
     const session = await auth.api.getSession({ headers: request.headers });
-    console.log(`Middleware: Session found: ${!!session?.user?.id}`);
+    await Logger.info(`Middleware: Session found: ${!!session?.user?.id}`);
 
-    const isProtected = protectedRoutes.some(route => route.test(pathname));
+    const isProtected = protectedRoutes.some((route) => route.test(pathname));
     const isAuthProtected = authProtectedRoutes.includes(pathname);
     const isAuthPublic = authPublicRoutes.includes(pathname);
 
     if (isProtected || isAuthProtected) {
       if (!session) {
-        const loginUrl = new URL('/auth/login', request.url);
-        loginUrl.searchParams.set('callbackUrl', pathname);
+        const loginUrl = new URL("/auth/login", request.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(loginUrl);
       }
     }
 
     if (isAuthPublic && session) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-
   } catch (error) {
-    console.error('Middleware auth check failed:', error);
+    await Logger.error("Middleware auth check failed", {
+      details: JSON.stringify(error),
+    });
     // Continue to allow access on error
   }
 
@@ -67,7 +69,7 @@ export async function proxy(request: NextRequest) {
       request.method === "POST" &&
       request.nextUrl.pathname.includes("/auth/")
     ) {
-      console.log(
+      await Logger.info(
         `Auth API call from IP: ${clientIP} at ${new Date().toISOString()}`
       );
     }

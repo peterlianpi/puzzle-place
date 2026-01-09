@@ -128,6 +128,16 @@ export const auth = betterAuth({
     },
   },
 
+  // User management features
+  user: {
+    changeEmail: {
+      enabled: true,
+    },
+    deleteUser: {
+      enabled: true,
+    },
+  },
+
   // Logging callbacks for authentication activities
   onSignUp: async ({ user }: { user: User }, request?: Request) => {
     console.log(

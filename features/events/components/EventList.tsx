@@ -129,7 +129,7 @@ export default function EventList({
         <p>
           No events found.{" "}
           {showCreateButton && (
-            <Link href={`${baseUrl}/create-event`} className="text-blue-500">
+            <Link href={`${baseUrl}/create-event`} className="text-primary">
               Create one
             </Link>
           )}
@@ -142,14 +142,14 @@ export default function EventList({
                 <CardTitle className="truncate">{event.EventName}</CardTitle>
               </CardHeader>
               <CardContent className="leading-relaxed">
-                <p className="text-sm text-gray-600 mb-2 truncate">
+                <p className="text-sm text-muted-foreground mb-2 truncate">
                   {event.Description || "No description"}
                 </p>
                 <div className="flex justify-between items-center mb-4">
                   <Badge variant="secondary">
                     {event.prizePools.length} prizes
                   </Badge>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {new Date(event.CreatedAt).toLocaleDateString('en-US', {
                       year: 'numeric', month: 'short', day: 'numeric'
                     })}
@@ -157,13 +157,13 @@ export default function EventList({
                 </div>
                 <div className="flex gap-2">
                   <Link href={`${baseUrl}/${event.EventID}`}>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                       View
                     </Button>
                   </Link>
                   {showEditButtons && (
                     <Link href={`${baseUrl}/${event.EventID}/edit`}>
-                      <Button size="sm" variant="outline" className="border-gray-300 hover:bg-gray-50">
+                      <Button size="sm" variant="outline" className="border-border hover:bg-secondary/50">
                         Edit
                       </Button>
                     </Link>
@@ -175,42 +175,42 @@ export default function EventList({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300 rounded-lg overflow-hidden shadow-md">
+          <table className="w-full border-collapse border border-border rounded-lg overflow-hidden shadow-md">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-300 p-3 text-left font-semibold">Event Name</th>
-                <th className="border border-gray-300 p-3 text-left font-semibold">Description</th>
-                <th className="border border-gray-300 p-3 text-left font-semibold">Prizes</th>
-                <th className="border border-gray-300 p-3 text-left font-semibold">Created</th>
-                <th className="border border-gray-300 p-3 text-left font-semibold">Actions</th>
+              <tr className="bg-secondary">
+                <th className="border border-border p-3 text-left font-semibold">Event Name</th>
+                <th className="border border-border p-3 text-left font-semibold">Description</th>
+                <th className="border border-border p-3 text-left font-semibold">Prizes</th>
+                <th className="border border-border p-3 text-left font-semibold">Created</th>
+                <th className="border border-border p-3 text-left font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sortedEvents.map((event) => (
-                <tr key={event.EventID} className="hover:bg-gray-50 transition-colors">
-                  <td className="border border-gray-300 p-3 font-semibold truncate max-w-xs">
+                <tr key={event.EventID} className="hover:bg-secondary/50 transition-colors">
+                  <td className="border border-border p-3 font-semibold truncate max-w-xs">
                     {event.EventName}
                   </td>
-                  <td className="border border-gray-300 p-3 text-sm text-gray-600 truncate max-w-xs">
+                  <td className="border border-border p-3 text-sm text-muted-foreground truncate max-w-xs">
                     {event.Description || "No description"}
                   </td>
-                  <td className="border border-gray-300 p-3">
+                  <td className="border border-border p-3">
                     <Badge variant="secondary">{event.prizePools.length} prizes</Badge>
                   </td>
-                  <td className="border border-gray-300 p-3 text-xs text-gray-500">
+                  <td className="border border-border p-3 text-xs text-muted-foreground">
                     {new Date(event.CreatedAt).toLocaleDateString('en-US', {
                       year: 'numeric', month: 'short', day: 'numeric'
                     })}
                   </td>
-                  <td className="border border-gray-300 p-3">
+                  <td className="border border-border p-3">
                     <div className="flex gap-2">
                       <Link href={`${baseUrl}/${event.EventID}`}>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                           View
                         </Button>
                       </Link>
                       {showEditButtons && (
-                        <Button size="sm" variant="outline" className="border-gray-300 hover:bg-gray-50">
+                        <Button size="sm" variant="outline" className="border-border hover:bg-secondary/50">
                           Edit
                         </Button>
                       )}

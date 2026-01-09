@@ -63,7 +63,7 @@ export default function GameEventDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -100,7 +100,7 @@ export default function GameEventDetailPage() {
         </Link>
         <h1 className="text-3xl font-bold">{event.EventName}</h1>
         {event.Description && (
-          <p className="text-gray-600 mt-2">{event.Description}</p>
+          <p className="text-muted-foreground mt-2">{event.Description}</p>
         )}
       </div>
 
@@ -122,13 +122,13 @@ export default function GameEventDetailPage() {
                       key={prize.PrizeID}
                       className={`flex justify-between items-center p-3 rounded-lg border ${
                         prize.IsBlank
-                          ? "bg-gray-50 border-gray-200"
-                          : "bg-blue-50 border-blue-200"
+                          ? "bg-secondary border-secondary"
+                          : "bg-primary/10 border-primary/20"
                       }`}
                     >
                       <div className="flex items-center">
                         <span className="font-medium mr-3">#{index + 1}</span>
-                        <span className={prize.IsBlank ? "text-gray-500" : ""}>
+                        <span className={prize.IsBlank ? "text-muted-foreground" : ""}>
                           {prize.PrizeName}
                         </span>
                         {prize.IsBlank && (
@@ -156,11 +156,11 @@ export default function GameEventDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center text-sm text-gray-600">
+              <div className="flex items-center text-sm text-muted-foreground">
                 <User className="h-4 w-4 mr-2" />
                 Created by: You
               </div>
-              <div className="flex items-center text-sm text-gray-600">
+              <div className="flex items-center text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4 mr-2" />
                 Created: {new Date(event.CreatedAt).toLocaleDateString()}
               </div>

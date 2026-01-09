@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -30,13 +31,99 @@ interface User {
   createdAt: Date;
 }
 
+interface InlineEditProps {
+  label: string;
+  value: string;
+  placeholder: string;
+  type?: string;
+  validator?: (value: string) => string | null;
+  onSave: (value: string) => Promise<void>;
+  buttonText?: string;
+}
+
+function InlineEdit({
+  label,
+  value,
+  placeholder,
+  type = "text",
+  validator,
+  onSave,
+  buttonText = "Save",
+}: InlineEditProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditValue(value);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditValue("");
+  };
+
+  const handleSave = async () => {
+    const validationError = validator ? validator(editValue) : null;
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await onSave(editValue.trim());
+      setIsEditing(false);
+      setEditValue("");
+    } catch (error) {
+      // Error is handled in onSave
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="space-y-2">
+        <Input
+          type={type}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          placeholder={placeholder}
+          disabled={isLoading}
+        />
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleSave} disabled={isLoading}>
+            {isLoading ? "Saving..." : buttonText}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Button variant="outline" className="w-full" onClick={handleEdit}>
+        {label}
+      </Button>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
   const requestedUsername = params.username as string;
-  const [editingUsername, setEditingUsername] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
 
   const { data: currentUserData, isLoading: isCurrentUserLoading } =
     useGetUser();
@@ -68,33 +155,23 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpdateUsername = () => {
-    if (!newUsername.trim()) {
-      toast.error("Username cannot be empty");
-      return;
-    }
-    if (newUsername.length < 3 || newUsername.length > 20) {
-      toast.error("Username must be 3-20 characters");
-      return;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) {
-      toast.error(
-        "Username can only contain letters, numbers, and underscores"
-      );
+  const handleDeleteAccount = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to delete your account? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
-    setUsernameMutation.mutate(
-      { username: newUsername },
-      {
-        onSuccess: () => {
-          setEditingUsername(false);
-          setNewUsername("");
-          // Redirect to new username route
-          router.push(`/user/${newUsername}`);
-        },
-      }
-    );
+    try {
+      await authClient.deleteUser();
+      toast.success("Account deleted successfully");
+      router.push("/");
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      toast.error("Failed to delete account");
+    }
   };
 
   if (isLoading) {
@@ -132,9 +209,7 @@ export default function ProfilePage() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">User Not Found</CardTitle>
-            <CardDescription>
-              An unexpected error occurred.
-            </CardDescription>
+            <CardDescription>An unexpected error occurred.</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <Button onClick={() => router.push("/")}>Back to Home</Button>
@@ -155,7 +230,7 @@ export default function ProfilePage() {
           </CardTitle>
           <CardDescription>
             {isCurrentUser
-              ? "Your account has been created successfully"
+              ? "Manage your profile and account settings"
               : `View ${user.name || "User"}'s public profile`}
           </CardDescription>
         </CardHeader>
@@ -164,8 +239,8 @@ export default function ProfilePage() {
             <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto overflow-hidden">
               {user.image ? (
                 <Image
-                width={100}
-                height={100}
+                  width={100}
+                  height={100}
                   src={user.image}
                   alt={`${user.name || "User"}'s avatar`}
                   className="w-full h-full object-cover"
@@ -178,7 +253,11 @@ export default function ProfilePage() {
             </div>
             {isCurrentUser && (
               <div className="mt-2">
-                <AvatarUploader onUploadSuccess={() => queryClient.invalidateQueries({ queryKey: ["user"] })} />
+                <AvatarUploader
+                  onUploadSuccess={() =>
+                    queryClient.invalidateQueries({ queryKey: ["user"] })
+                  }
+                />
               </div>
             )}
             <div>
@@ -202,8 +281,8 @@ export default function ProfilePage() {
                   <span
                     className={
                       user.emailVerified ?? false
-                        ? "text-green-600"
-                        : "text-yellow-600"
+                        ? "text-primary"
+                        : "text-muted-foreground"
                     }
                   >
                     {user.emailVerified ?? false
@@ -233,58 +312,125 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {editingUsername ? (
-                <div className="pt-2 space-y-2">
-                  <input
-                    type="text"
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
-                    className="w-full px-3 py-2 border rounded"
-                    placeholder="Enter new username"
-                  />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleUpdateUsername}>
-                      Save Username
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingUsername(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="pt-2">
+              {/* Account Settings Section */}
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                  Account Settings
+                </h4>
+
+                <InlineEdit
+                  label="Edit Name"
+                  value={user.name || ""}
+                  placeholder="Enter your display name"
+                  validator={(value) =>
+                    !value.trim() ? "Name cannot be empty" : null
+                  }
+                  onSave={async (value) => {
+                    try {
+                      await authClient.updateUser({ name: value });
+                      toast.success("Name updated successfully");
+                      queryClient.invalidateQueries({ queryKey: ["user"] });
+                      queryClient.invalidateQueries({ queryKey: ["get-user"] });
+                    } catch (error) {
+                      console.error("Failed to update name:", error);
+                      toast.error("Failed to update name");
+                      throw error;
+                    }
+                  }}
+                />
+
+                <InlineEdit
+                  label="Edit Username"
+                  value={user.username || ""}
+                  placeholder="Enter new username"
+                  validator={(value) => {
+                    if (!value.trim()) return "Username cannot be empty";
+                    if (value.length < 3 || value.length > 20)
+                      return "Username must be 3-20 characters";
+                    if (!/^[a-zA-Z0-9_]+$/.test(value))
+                      return "Username can only contain letters, numbers, and underscores";
+                    return null;
+                  }}
+                  onSave={async (value) => {
+                    setUsernameMutation.mutate(
+                      { username: value },
+                      {
+                        onSuccess: () => {
+                          toast.success("Username updated successfully");
+                          router.push(`/user/${value}`);
+                        },
+                        onError: (error) => {
+                          toast.error(error.message || "Failed to update username");
+                          throw error;
+                        },
+                      }
+                    );
+                  }}
+                />
+
+                <InlineEdit
+                  label="Change Email"
+                  value=""
+                  placeholder="Enter new email address"
+                  type="email"
+                  validator={(value) => {
+                    if (!value.trim()) return "Email cannot be empty";
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+                      return "Please enter a valid email address";
+                    return null;
+                  }}
+                  onSave={async (value) => {
+                    try {
+                      await authClient.changeEmail({
+                        newEmail: value,
+                        callbackURL: "/dashboard",
+                      });
+                      toast.success("Email change initiated. Please check your email for verification.");
+                    } catch (error) {
+                      console.error("Failed to change email:", error);
+                      toast.error("Failed to change email");
+                      throw error;
+                    }
+                  }}
+                  buttonText="Send Verification"
+                />
+              </div>
+
+              {/* Actions Section */}
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                  Quick Actions
+                </h4>
+
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    className="w-full"
+                    onClick={() => router.push("/dashboard")}
+                  >
+                    Go to Dashboard
+                  </Button>
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => setEditingUsername(true)}
+                    onClick={() => router.push("/auth/change-password")}
                   >
-                    Edit Username
+                    Change Password
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleDeleteAccount}
+                  >
+                    Delete Account
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleSignOut}
+                  >
+                    Sign Out
                   </Button>
                 </div>
-              )}
-
-              <div className="pt-4 space-y-2">
-                <Button className="w-full" onClick={() => router.push("/dashboard")}>
-                  Go to Dashboard
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => router.push("/auth/change-password")}
-                >
-                  Change Password
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleSignOut}
-                >
-                  Sign Out
-                </Button>
               </div>
             </>
           ) : (
