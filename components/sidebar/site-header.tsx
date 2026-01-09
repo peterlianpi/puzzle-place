@@ -6,7 +6,7 @@ import { MenuIcon, SidebarIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { ModeToggle } from "@/components/theme-toggle";
+import { ModeToggle } from "@/components/theme/theme-toggle";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();

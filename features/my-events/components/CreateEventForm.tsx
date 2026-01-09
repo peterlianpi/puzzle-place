@@ -44,7 +44,7 @@ type CreateEventFormData = z.infer<typeof createEventSchema>;
 interface GameEventFormProps {
   mode: 'create' | 'update';
   event?: {
-    eventId: number;
+    eventId: string;
     eventName: string;
     description?: string;
     prizes: { name: string; value: number; isBlank: boolean; }[];
@@ -98,7 +98,7 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
       }
     } else if (mode === 'update' && event) {
       await updateEvent.mutateAsync({
-        id: event.eventId.toString(),
+        id: event.eventId,
         eventName: data.eventName,
         description: data.description,
         prizes: data.prizes,

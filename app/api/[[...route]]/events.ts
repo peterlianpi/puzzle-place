@@ -81,9 +81,9 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const { id: param } = c.req.valid("param"); // Extract account ID from URL params
-      const id = parseInt(param);
-      if (isNaN(id)) {
+      const { id } = c.req.valid("param");
+
+      if (!id) {
         return c.json({ error: "Invalid ID" }, 400);
       }
 

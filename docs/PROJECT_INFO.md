@@ -76,15 +76,21 @@ puzzle-place/
 
 ## Database Schema
 
+### Schema Updates
+- **String IDs**: All IDs now use `String` type with `@default(cuid())` for unique, collision-resistant identifiers
+- **Better Auth Compatibility**: Updated User, Session, Account, Verification models to match Better Auth requirements
+- **Performance Indexes**: Added database indexes on frequently queried fields (CreatorUserID, IsActive, CreatedAt, etc.)
+
 ### Core Models
-- **User**: User accounts with auth info
-- **Session**: Auth sessions
-- **Account**: OAuth accounts
-- **Verification**: Email verification tokens
-- **GameEvent**: Game events with prizes
-- **EventPrizePool**: Prize configurations
-- **GameHistory**: Participation records
-- **Log**: System logs
+- **User**: User accounts with auth info, indexed on username, emailVerified, createdAt
+- **Session**: Auth sessions with IP/user agent tracking
+- **Account**: OAuth accounts linked to users
+- **Verification**: Email verification tokens with expiration
+- **GameEvent**: Game events with prizes, indexed on CreatorUserID, IsActive, CreatedAt
+- **EventPrizePool**: Prize configurations, indexed on EventID
+- **GameHistory**: Participation records, indexed on EventID and PlayerUserID
+- **Log**: System logs with user relations and indexed on type, level, timestamp
+- **Testimonial**: User testimonials with active status indexing
 
 ## API Endpoints
 
@@ -127,3 +133,8 @@ The application is designed for deployment on platforms like Vercel, Netlify, or
 ## Recent Improvements
 
 See `SECURITY_PERFORMANCE_UPDATES.md` for recent security, performance, and speed enhancements.
+
+---
+
+**Last Updated:** January 9, 2026
+**Version:** 1.0.0

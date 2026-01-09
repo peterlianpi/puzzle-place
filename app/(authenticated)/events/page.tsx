@@ -2,8 +2,8 @@
 
 import { useGetEvents } from "@/features/events/api/use-get-events";
 import EventList from "@/features/events/components/EventList";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import ErrorMessage from "@/components/ErrorMessage";
+import LoadingSpinner from "@/components/sidebar/LoadingSpinner";
+import ErrorMessage from "@/components/error-handler/ErrorMessage";
 
 export default function PublicEventsPage() {
   const { data, isLoading, error } = useGetEvents({ limit: 20, offset: 0 });

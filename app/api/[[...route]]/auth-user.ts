@@ -23,6 +23,7 @@ const app = new Hono()
         username: true,
         emailVerified: true,
         createdAt: true,
+        image: true,
       },
     });
 

@@ -13,14 +13,14 @@ import { useGetEvent } from "@/features/events/api/use-get-event";
 import { useDeleteGameEvent } from "@/features/my-events/api/use-delete-game-event";
 
 interface GameEvent {
-  EventID: number;
+  EventID: string;
   EventName: string;
   Description: string | null;
   IsActive: boolean;
   CreatedAt: string;
   CreatorUserID: string;
   prizePools: {
-    PrizeID: number;
+    PrizeID: string;
     PrizeName: string;
     PrizeValue: string;
     DisplayOrder: number | null;

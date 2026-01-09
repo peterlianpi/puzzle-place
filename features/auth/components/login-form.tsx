@@ -55,6 +55,21 @@ export function LoginForm({
     }
   }, [successMessage]);
 
+  useEffect(() => {
+    // Check if user is already authenticated and redirect to dashboard
+    const checkSession = async () => {
+      try {
+        const session = await authClient.getSession();
+        if (session.data?.user) {
+          router.push('/dashboard');
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
+      }
+    };
+    checkSession();
+  }, [router]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {

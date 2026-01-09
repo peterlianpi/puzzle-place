@@ -122,7 +122,29 @@ npm install better-auth @tanstack/react-query sonner
 - Loading states during submission
 - Automatic redirect after successful reset
 
-### 5. Change Password (Authenticated Users)
+### 5. Auto-Login and Route Protection
+
+**Files:** `proxy.ts` (middleware), `components/auth/login-form.tsx`, `components/auth/signup-form.tsx`
+
+#### Features:
+- ✅ Automatic session persistence with HTTP-only cookies (7-day expiry)
+- ✅ Server-side route protection using middleware
+- ✅ Client-side session checks for better UX
+- ✅ Protected routes: `/dashboard`, `/my-events`, `/events/[id]`, `/my-events/[id]`, `/user/[username]`
+- ✅ Auth-required pages: `/auth/change-password`, `/auth/profile`
+- ✅ Auto-redirect from login/signup pages if already authenticated
+
+#### Security:
+- Server-side session validation on protected routes
+- Automatic redirect to login with callback URL for unauthenticated access
+- Client-side checks prevent showing forms to logged-in users
+
+#### User Experience:
+- Seamless navigation without manual login after session expiry
+- Instant redirects for authenticated users visiting login/signup
+- Callback URL preservation for post-login redirects
+
+### 6. Change Password (Authenticated Users)
 
 **File:** `app/auth/change-password/page.tsx` & `components/auth/change-password-form.tsx`
 
@@ -344,6 +366,9 @@ export const useSetUsername = () => {
 - [ ] Change password for authenticated users
 - [ ] Email verification resend functionality
 - [ ] Session persistence across browser refreshes
+- [ ] Auto-login: authenticated users visiting login/signup are redirected to dashboard
+- [ ] Route protection: unauthenticated users accessing protected routes are redirected to login
+- [ ] Callback URL: post-login redirect to originally requested protected page
 - [ ] Social login (Google OAuth)
 - [ ] Form validation and error handling
 - [ ] Mobile responsiveness

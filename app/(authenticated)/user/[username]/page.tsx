@@ -164,6 +164,8 @@ export default function ProfilePage() {
             <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto overflow-hidden">
               {user.image ? (
                 <Image
+                width={100}
+                height={100}
                   src={user.image}
                   alt={`${user.name || "User"}'s avatar`}
                   className="w-full h-full object-cover"

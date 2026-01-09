@@ -1,5 +1,6 @@
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import "dotenv/config";
 
 const adapter = new PrismaPg({
@@ -9,6 +10,65 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({
   adapter,
 });
+
+// Logging utility with timestamps
+const log = (message: string, level: 'info' | 'warn' | 'error' = 'info') => {
+  const timestamp = new Date().toISOString();
+  const prefix = level === 'error' ? '[ERROR]' : level === 'warn' ? '[WARN]' : '[INFO]';
+  console.log(`${timestamp} ${prefix} ${message}`);
+};
+
+// Database connection check with retry logic
+async function checkDatabaseConnection(retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      log(`Attempting to connect to database (attempt ${attempt}/${retries})...`);
+      await prisma.$connect();
+      log('Database connection established successfully.');
+      return;
+    } catch (error) {
+      let errorType = 'unknown';
+      let errorMessage = 'Unknown error';
+
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P1001') {
+          errorType = 'network';
+          errorMessage = `Network connection error: ${error.message}`;
+        } else if (error.code === 'P1010') {
+          errorType = 'access';
+          errorMessage = `Access denied: ${error.message}`;
+        } else {
+          errorMessage = `Prisma error (${error.code}): ${error.message}`;
+        }
+      } else if (error instanceof Error) {
+        if (error.message.includes('SSL') || error.message.includes('TLS')) {
+          errorType = 'tls';
+          errorMessage = `TLS/SSL error: ${error.message}`;
+        } else if (error.message.includes('ECONNREFUSED') || error.message.includes('ENOTFOUND')) {
+          errorType = 'network';
+          errorMessage = `Network error: ${error.message}`;
+        } else {
+          errorMessage = `Unexpected error: ${error.message}`;
+        }
+      } else {
+        errorMessage = `Unexpected non-Error thrown: ${String(error)}`;
+      }
+
+      log(errorMessage, 'error');
+
+      if (attempt < retries) {
+        const delay = Math.pow(2, attempt) * 1000; // exponential backoff
+        log(`Retrying connection in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw new Error(`Failed to establish database connection after ${retries} attempts. Last error: ${errorMessage}`);
+      }
+    }
+  }
+}
+
+// Parse command-line arguments and environment variables for clear flag
+const shouldClear = process.argv.includes('--clear') || process.env.CLEAR_EXISTING === 'true';
 
 const gameEvents = [
   {
@@ -86,7 +146,7 @@ const gameEvents = [
     id: "e9f99d41-2975-41df-b518-ebadd5f6b28b",
     creator_id: "4d5e5ecb-bc7d-4e80-a191-bf713f77318b",
     event_name: "Weekend Foodie Challenge 🌶️",
-    description: "သူငယ်ချင်းများ စုစားကြမယ်.. ဘယ်သူရှင်းမလဲ၊ ဘာစားမလဲ?",
+    description: "သူငယ်ချင်းများစုစားကြမယ်.. ဘယ်သူရှင်းမလဲ၊ ဘာစားမလဲ?",
     created_at: "2026-01-03 17:33:32.244795+00",
   },
   {
@@ -959,64 +1019,196 @@ const prizePool = [
   },
 ];
 
+const testimonials = [
+  {
+    name: 'Sarah Johnson',
+    role: 'Puzzle Enthusiast',
+    content: 'Puzzle Place has transformed how I enjoy games. The community is amazing and the prizes are fantastic!',
+    avatar: 'https://picsum.photos/100/100?random=20',
+  },
+  {
+    name: 'Mike Chen',
+    role: 'Strategy Gamer',
+    content: 'I\'ve never seen a platform that brings together so many different game types. Highly recommended!',
+    avatar: 'https://picsum.photos/100/100?random=21',
+  },
+  {
+    name: 'Emily Davis',
+    role: 'Trivia Lover',
+    content: 'The events are well-organized and the interface is so user-friendly. I keep coming back for more!',
+    avatar: 'https://picsum.photos/100/100?random=22',
+  },
+];
+
+// Extract unique creator user IDs from gameEvents
+const uniqueCreatorIds = Array.from(new Set(gameEvents.map(event => event.creator_id)));
+
+const users = uniqueCreatorIds.map((id, index) => ({
+  id,
+  name: `User ${index + 1}`,
+  email: `user${index + 1}@example.com`,
+  username: `user${index + 1}`,
+  PasswordHash: "$2b$10$abcdefghijklmnopqrstuvxyz1234567890ABCDEFGHIJKLMNOPQ",
+  emailVerified: true,
+}));
+
+const accounts = uniqueCreatorIds.map((id, index) => ({
+  userId: id,
+  providerId: "credential",
+  accountId: `user${index + 1}@example.com`,
+  password: "$2b$10$abcdefghijklmnopqrstuvxyz1234567890ABCDEFGHIJKLMNOPQ",
+}));
+
 async function main() {
-  // Find the user with email peterpausianlian2020@gmail.com to use as creator
-  const creatorUser = await prisma.user.findUnique({
-    where: { email: "peterpausianlian2020@gmail.com" },
-  });
+  log(`Starting seed process. Clear existing data: ${shouldClear}`);
 
-  if (!creatorUser) {
-    throw new Error(
-      "Creator user with email peterpausianlian2020@gmail.com not found"
-    );
-  }
+  await checkDatabaseConnection();
 
-  console.log("Seeding game events...");
-  const eventIdMap: Record<string, number> = {};
+  try {
+    // Seed users
+    log(`Seeding ${users.length} users...`);
+    for (const user of users) {
+      await prisma.user.upsert({
+        where: { id: user.id },
+        update: user,
+        create: user,
+      });
+    }
+    log(`Seeded users successfully.`);
 
-  for (const event of gameEvents) {
-    const createdEvent = await prisma.gameEvent.create({
-      data: {
-        CreatorUserID: creatorUser.id,
-        EventName: event.event_name,
-        Description: event.description,
-        CreatedAt: new Date(event.created_at),
-      },
-    });
-    eventIdMap[event.id] = createdEvent.EventID;
-    console.log(`Seeded event: ${event.event_name} (ID: ${createdEvent.EventID})`);
-  }
-  console.log(`Seeded ${gameEvents.length} game events.`);
+    // Seed accounts
+    log(`Seeding ${accounts.length} accounts...`);
+    for (const account of accounts) {
+      await prisma.account.upsert({
+        where: { providerId_accountId: { providerId: account.providerId, accountId: account.accountId } },
+        update: account,
+        create: account,
+      });
+    }
+    log(`Seeded accounts successfully.`);
 
-  console.log("Seeding prize pools...");
-  let prizeCount = 0;
-  for (const prize of prizePool) {
-    if (eventIdMap[prize.event_id]) {
-      await prisma.eventPrizePool.create({
-        data: {
-          EventID: eventIdMap[prize.event_id],
-          PrizeName: prize.name,
-          PrizeValue: parseFloat(prize.value),
-          DisplayOrder: prize.sort_order,
-          IsBlank: prize.is_blank,
+    if (shouldClear) {
+      log('Clearing existing seed data...');
+      // Delete in reverse order to handle dependencies within a transaction
+      await prisma.$transaction(async (tx) => {
+        await tx.testimonial.deleteMany({
+          where: { name: { in: testimonials.map(t => t.name) } }
+        });
+        await tx.eventPrizePool.deleteMany({
+          where: { EventID: { in: gameEvents.map(e => e.id) } }
+        });
+        await tx.gameEvent.deleteMany({
+          where: { EventID: { in: gameEvents.map(ev => ev.id) } }
+        });
+        await tx.account.deleteMany({
+          where: { userId: { in: uniqueCreatorIds } }
+        });
+        await tx.user.deleteMany({
+          where: { id: { in: uniqueCreatorIds } }
+        });
+      });
+      log('Cleared existing data.');
+    }
+
+    // Validate data integrity: ensure all event_ids in prizes exist in gameEvents
+    const eventIds = new Set(gameEvents.map(e => e.id));
+    const invalidPrizes = prizePool.filter(p => !eventIds.has(p.event_id));
+    if (invalidPrizes.length > 0) {
+      throw new Error(`Data integrity violation: Prizes reference non-existent events: ${invalidPrizes.map(p => p.id).join(', ')}`);
+    }
+
+    // Seed game events and their prizes in groups for atomicity
+    log(`Seeding ${gameEvents.length} game events and their prizes...`);
+    let totalPrizeCount = 0;
+    for (let i = 0; i < gameEvents.length; i++) {
+      const event = gameEvents[i];
+      const eventPrizes = prizePool.filter(p => p.event_id === event.id);
+
+      await prisma.$transaction(async (tx) => {
+        // Upsert the event
+        await tx.gameEvent.upsert({
+          where: { EventID: event.id },
+          update: {
+            CreatorUserID: event.creator_id,
+            EventName: event.event_name,
+            Description: event.description,
+            CreatedAt: new Date(event.created_at),
+          },
+          create: {
+            EventID: event.id,
+            CreatorUserID: event.creator_id,
+            EventName: event.event_name,
+            Description: event.description,
+            CreatedAt: new Date(event.created_at),
+          },
+        });
+
+        // Seed prizes for this event
+        for (const prize of eventPrizes) {
+          const existing = await tx.eventPrizePool.findUnique({
+            where: { PrizeID: prize.id },
+          });
+          if (!existing) {
+            await tx.eventPrizePool.create({
+              data: {
+                PrizeID: prize.id,
+                EventID: prize.event_id,
+                PrizeName: prize.name,
+                PrizeValue: parseFloat(prize.value),
+                DisplayOrder: prize.sort_order,
+                IsBlank: prize.is_blank,
+              },
+            });
+            totalPrizeCount++;
+          }
+        }
+      });
+
+      if ((i + 1) % 5 === 0 || i === gameEvents.length - 1) {
+        log(`Seeded ${i + 1}/${gameEvents.length} events and ${totalPrizeCount} prizes so far`);
+      }
+    }
+    log(`Seeded ${gameEvents.length} game events and ${totalPrizeCount} prize pools successfully.`);
+
+    // Seed testimonials individually
+    log(`Seeding ${testimonials.length} testimonials...`);
+    for (let i = 0; i < testimonials.length; i++) {
+      const testimonial = testimonials[i];
+      const existing = await prisma.testimonial.findFirst({
+        where: {
+          name: testimonial.name,
+          role: testimonial.role,
         },
       });
-      prizeCount++;
-      console.log(`Seeded prize: ${prize.name} for event ${prize.event_id}`);
-    } else {
-      console.log(`Skipped prize: ${prize.name} (event ${prize.event_id} not found)`);
+      if (!existing) {
+        await prisma.testimonial.create({
+          data: {
+            name: testimonial.name,
+            role: testimonial.role,
+            content: testimonial.content,
+            avatar: testimonial.avatar,
+          },
+        });
+        log(`Seeded testimonial: ${testimonial.name}`);
+      } else {
+        log(`Skipped testimonial: ${testimonial.name} (already exists)`);
+      }
     }
-  }
-  console.log(`Seeded ${prizeCount} prize pools.`);
+    log(`Seeded testimonials successfully.`);
 
-  console.log("Seeding completed");
+    log("Seeding completed successfully.");
+  } catch (error) {
+    log(`Error during seeding: ${error}`, 'error');
+    throw error;
+  }
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    log(`Seeding failed: ${e}`, 'error');
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
+    log("Database connection closed.");
   });

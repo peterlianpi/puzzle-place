@@ -1,21 +1,34 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
 import { handleApiError } from "@/lib/api-errors";
 import { v2 as cloudinary } from "cloudinary";
 import z from "zod";
 
+// Schema for upload
+const uploadSchema = z.object({
+  imageData: z.string(),
+});
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Debug logging for Cloudinary config
+console.log("Cloudinary config loaded:", {
+  cloud_name: !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+  api_secret: !!process.env.CLOUDINARY_API_SECRET,
 });
 
 const app = new Hono()
 
   // Upload Avatar
-  .post("/upload", async (c) => {
+  .post("/upload", zValidator("json", uploadSchema), async (c) => {
     const session = await auth.api.getSession({
       headers: c.req.raw.headers,
     });
@@ -24,12 +37,7 @@ const app = new Hono()
       return c.json({ error: "Please log in to upload avatar" }, 401);
     }
 
-    const body = await c.req.json();
-    const { imageData } = body; // Expect base64 string
-
-    if (!imageData || typeof imageData !== "string") {
-      return c.json({ error: "Image data is required" }, 400);
-    }
+    const { imageData } = c.req.valid("json");
 
     try {
       // Upload to Cloudinary
@@ -40,8 +48,8 @@ const app = new Hono()
         transformation: [
           { width: 200, height: 200, crop: "fill", gravity: "face" },
           { quality: "auto" },
-          { fetch_format: "auto" }
-        ]
+          { fetch_format: "auto" },
+        ],
       });
 
       // Update user image in database
@@ -52,9 +60,8 @@ const app = new Hono()
 
       return c.json({
         success: true,
-        imageUrl: uploadResult.secure_url
+        imageUrl: uploadResult.secure_url,
       });
-
     } catch (error) {
       console.error("Avatar upload error:", error);
       return c.json({ error: "Failed to upload avatar" }, 500);

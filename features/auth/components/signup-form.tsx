@@ -20,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth/auth-client";
 import { GoogleSignInButton } from "@/features/auth/components/google-signin-button";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Check, X, Loader2 } from "lucide-react";
@@ -113,6 +113,21 @@ export function SignupForm({
   });
 
   const setUsernameMutation = useSetUsername();
+
+  useEffect(() => {
+    // Check if user is already authenticated and redirect to dashboard
+    const checkSession = async () => {
+      try {
+        const session = await authClient.getSession();
+        if (session.data?.user) {
+          router.push('/dashboard');
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
+      }
+    };
+    checkSession();
+  }, [router]);
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     // Wait for username check if still loading

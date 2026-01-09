@@ -9,7 +9,7 @@ import { LayoutGrid, List, TrendingUp, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PrizePool {
-  PrizeID: number;
+  PrizeID: string;
   PrizeName: string;
   PrizeValue: string;
   DisplayOrder: number | null;
@@ -17,7 +17,7 @@ interface PrizePool {
 }
 
 interface Event {
-  EventID: number;
+  EventID: string;
   EventName: string;
   Description: string | null;
   CreatedAt: string;

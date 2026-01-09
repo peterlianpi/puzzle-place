@@ -1,7 +1,52 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth/auth";
 
-export function proxy(request: NextRequest) {
+// Protected routes requiring authentication
+const protectedRoutes = [
+  /^\/dashboard/,
+  /^\/my-events/,
+  /^\/events\/[^\/]+$/,
+  /^\/my-events\/[^\/]+$/,
+  /^\/user\//,
+];
+
+// Auth pages requiring authentication
+const authProtectedRoutes = ["/auth/change-password", "/auth/profile"];
+
+// Public auth pages that redirect if authenticated
+const authPublicRoutes = ["/auth/login", "/auth/signup"];
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Auth checks first - before creating response
+  try {
+    console.log(`Middleware: Checking session for ${pathname}`);
+    const session = await auth.api.getSession({ headers: request.headers });
+    console.log(`Middleware: Session found: ${!!session?.user?.id}`);
+
+    const isProtected = protectedRoutes.some(route => route.test(pathname));
+    const isAuthProtected = authProtectedRoutes.includes(pathname);
+    const isAuthPublic = authPublicRoutes.includes(pathname);
+
+    if (isProtected || isAuthProtected) {
+      if (!session) {
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('callbackUrl', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+
+    if (isAuthPublic && session) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+  } catch (error) {
+    console.error('Middleware auth check failed:', error);
+    // Continue to allow access on error
+  }
+
   // Clone the response
   const res = NextResponse.next();
 
@@ -35,11 +80,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/auth (handled by Better Auth)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * Note: Removed api/auth exclusion since auth checks may be needed elsewhere
      */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
