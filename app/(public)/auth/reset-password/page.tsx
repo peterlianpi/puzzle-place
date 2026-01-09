@@ -1,6 +1,6 @@
 "use client";
 
-import { ResetPasswordForm } from "@/components/reset-password-form";
+import { ResetPasswordForm } from "@/features/auth/components/reset-password-form";
 import { GalleryVerticalEnd } from "lucide-react";
 import Image from "next/image";
 import { Suspense } from "react";

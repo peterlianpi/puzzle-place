@@ -26,6 +26,12 @@ export async function sendEmail({
   text?: string;
   html?: string;
 }) {
+  if (!process.env.SMTP_FROM) {
+    const errorMsg = 'SMTP_FROM environment variable is not set. Please set it to a valid email address.';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+  console.log(`Attempting to send email to: ${to}, subject: ${subject}`);
   try {
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM,
@@ -34,9 +40,9 @@ export async function sendEmail({
       text,
       html,
     });
-   
+    console.log(`Email sent successfully to: ${to}, messageId: ${info.messageId}`);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error(`Error sending email to ${to}:`, error);
     throw error;
   }
 }

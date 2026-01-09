@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { betterAuth } from "better-auth";
+import type { User } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "../db/prisma";
 import { sendEmail } from "../email";
@@ -22,14 +23,13 @@ export const auth = betterAuth({
     // Configure password reset token expiration
     resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours instead of default 1 hour
     sendResetPassword: async ({ user, url, token }, request) => {
+      console.log(`Sending password reset email to user: ${user.email}, name: ${user.name}`);
       // Better Auth provides the API URL, but we need the frontend URL
       // Extract token from the API URL and construct frontend URL
       const tokenFromUrl = url.split("/reset-password/")[1]?.split("?")[0];
       const resetLink = `${
         process.env.BETTER_AUTH_URL || "http://localhost:3000"
       }/auth/reset-password?token=${tokenFromUrl || token}`;
-
-    
 
       const template = emailTemplates.passwordReset({
         name: user.name,
@@ -57,7 +57,6 @@ export const auth = betterAuth({
         text: `Your Puzzle Place password has been changed. If you didn't make this change, please contact support immediately.`,
         html: template.html,
       });
-
     },
   },
 
@@ -65,12 +64,14 @@ export const auth = betterAuth({
     // Allow verification without being logged in
     requireEmailConfirmation: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
+      console.log(
+        `Sending verification email to user: ${user.email}, name: ${user.name}`
+      );
       // Create frontend verification URL instead of API URL
       const verificationLink = `${
         process.env.BETTER_AUTH_URL || "http://localhost:3000"
       }/auth/verify-email?token=${token}`;
 
-   
       const template = emailTemplates.emailVerification({
         name: user.name,
         email: user.email,
@@ -102,8 +103,6 @@ export const auth = betterAuth({
     },
   },
 
-
-
   baseURL:
     process.env.BETTER_AUTH_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -127,5 +126,18 @@ export const auth = betterAuth({
       accessType: "offline",
       prompt: "select_account consent",
     },
+  },
+
+  // Logging callbacks for authentication activities
+  onSignUp: async ({ user }: { user: User }, request?: Request) => {
+    console.log(
+      `User successfully signed up: ${user.email}, name: ${user.name}`
+    );
+  },
+  onSignIn: async ({ user }: { user: User }, request?: Request) => {
+    console.log(`User signed in: ${user.email}, name: ${user.name}`);
+  },
+  onEmailVerification: async ({ user }: { user: User }, request?: Request) => {
+    console.log(`User verified email: ${user.email}, name: ${user.name}`);
   },
 });

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Puzzle Place uses a modern, secure authentication system built with **Better Auth** and **Next.js**. The system provides comprehensive user management with email/password authentication, social login, password reset, email verification, and secure session management.
+Puzzle Place uses a modern, secure authentication system built with **Better Auth** for core auth flows and **Hono + React Query** for custom API endpoints. The system provides comprehensive user management with email/password authentication, social login, password reset, email verification, secure session management, and custom user operations.
 
 ## 🚀 Quick Start
 
@@ -236,6 +236,75 @@ const changePasswordMutation = useChangePassword();
 
 // Email Verification
 const resendVerificationMutation = useResendVerification();
+
+// Custom User Operations (Hono + React Query)
+const setUsernameMutation = useSetUsername();
+const checkUsernameQuery = useCheckUsername({ username: "example" });
+const getUserQuery = useGetUser();
+```
+
+### Hono + React Query Pattern
+
+For custom API endpoints beyond standard authentication, Puzzle Place uses **Hono** for backend API routes and **React Query** for frontend data fetching. This provides type-safe, efficient data management with automatic caching, background refetching, and optimistic updates.
+
+#### Key Features:
+- ✅ Type-safe API calls with TypeScript inference
+- ✅ Automatic caching and background synchronization
+- ✅ Optimistic updates for better UX
+- ✅ Error handling with toast notifications
+- ✅ Efficient data invalidation
+
+#### Hono Client Setup
+
+```typescript
+import { hc } from "hono/client";
+import { AppType } from "@/app/api/[[...route]]/route";
+
+export const client = hc<AppType>("");
+```
+
+#### Example Hono Route (Backend)
+
+```typescript
+// app/api/[[...route]]/auth.ts
+import { Hono } from "hono";
+import { auth } from "@/lib/auth/auth";
+import { prisma } from "@/lib/db/prisma";
+
+const app = new Hono()
+  .post("/set-username", async (c) => {
+    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    if (!session?.user?.id) return c.json({ error: "Unauthorized" }, 401);
+
+    const { username } = await c.req.json();
+    // ... validation and update logic
+    return c.json({ success: true, user: updatedUser });
+  });
+
+export default app;
+```
+
+#### Example React Query Hook (Frontend)
+
+```typescript
+// features/auth/api/use-set-username.ts
+import { InferResponseType } from "hono";
+import { useMutation } from "@tanstack/react-query";
+import { client } from "@/lib/api/hono-client";
+import { toast } from "sonner";
+
+type ResponseType = InferResponseType<typeof client.api.auth["set-username"]["$post"]>;
+
+export const useSetUsername = () => {
+  return useMutation({
+    mutationFn: async (json: { username: string }) => {
+      const response = await client.api.auth["set-username"]["$post"]({ json });
+      return response.json();
+    },
+    onSuccess: () => toast.success("Username set successfully!"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
 ```
 
 ## 🚦 Error Handling

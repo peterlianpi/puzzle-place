@@ -1,7 +1,7 @@
 "use client";
 
-import { LoginForm } from "@/components/login-form";
-import { AuthBranding } from "@/components/auth/AuthBranding";
+import { LoginForm } from "@/features/auth/components/login-form";
+import { AuthBranding } from "@/features/auth/components/AuthBranding";
 import Image from "next/image";
 import { motion } from "framer-motion";
 

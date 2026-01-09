@@ -4,8 +4,8 @@ import Image from "next/image";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChangePasswordForm } from "@/components/change-password-form";
-import { AuthBranding } from "@/components/auth/AuthBranding";
+import { ChangePasswordForm } from "@/features/auth/components/change-password-form";
+import { AuthBranding } from "@/features/auth/components/AuthBranding";
 import { authClient } from "@/lib/auth/auth-client";
 import { motion } from "framer-motion";
 

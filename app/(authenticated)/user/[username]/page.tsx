@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,91 +12,50 @@ import {
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth/auth-client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useResendVerification } from "@/features/auth/api/use-resend-verification";
+import { useGetUser } from "@/features/auth/api/use-get-user";
+import { useGetUserByUsername } from "@/features/users/api/use-get-user-by-username";
+import { useSetUsername } from "@/features/auth/api/use-set-username";
+import { AvatarUploader } from "@/features/avatar/components/avatar-uploader";
+import Image from "next/image";
 
 interface User {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
-  username?: string;
-  emailVerified: boolean;
-  image?: string;
+  username: string | null;
+  emailVerified?: boolean | null;
+  image?: string | null;
   createdAt: Date;
 }
 
 export default function ProfilePage() {
   const router = useRouter();
   const params = useParams();
+  const queryClient = useQueryClient();
   const requestedUsername = params.username as string;
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
-  const [userNotFound, setUserNotFound] = useState(false);
   const [newUsername, setNewUsername] = useState("");
+
+  const { data: currentUserData, isLoading: isCurrentUserLoading } =
+    useGetUser();
+  const {
+    data: requestedUserData,
+    isLoading: isRequestedUserLoading,
+    error: requestedUserError,
+  } = useGetUserByUsername({
+    username: requestedUsername,
+  });
   const resendVerificationMutation = useResendVerification();
+  const setUsernameMutation = useSetUsername();
 
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        // First, try to get current authenticated user
-        const authResponse = await fetch("/api/auth/get-user");
-        let currentUser = null;
-
-        if (authResponse.ok) {
-          const { user } = await authResponse.json();
-          currentUser = user;
-        }
-        // Note: Don't redirect on auth failure - allow public access
-
-        // Check if this is the current user's profile
-        if (currentUser && currentUser.username === requestedUsername) {
-          // Show editable profile for current user
-          setUser(currentUser);
-          setIsCurrentUser(true);
-        } else {
-          // Try to get the requested user (public view)
-          const publicResponse = await fetch(`/api/users/${requestedUsername}`);
-          if (publicResponse.ok) {
-            const { user: publicUser } = await publicResponse.json();
-            setUser(publicUser);
-            setIsCurrentUser(!!currentUser && currentUser.username === requestedUsername);
-          } else if (publicResponse.status === 404) {
-            // User not found
-            router.push("/404");
-            return;
-          } else {
-            // Other error - show a generic error or fallback
-            setUser({
-              id: "error",
-              name: "User",
-              username: requestedUsername,
-              email: "",
-              emailVerified: false,
-              createdAt: new Date(),
-            } as User);
-            setIsCurrentUser(false);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to get user:", error);
-        // Show error state instead of redirecting
-        setUser({
-          id: "error",
-          name: "Error",
-          username: requestedUsername,
-          email: "",
-          emailVerified: false,
-          createdAt: new Date(),
-        } as User);
-        setIsCurrentUser(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getUser();
-  }, [router, requestedUsername]);
+  const currentUser = currentUserData?.user;
+  const requestedUser = requestedUserData?.user;
+  const isCurrentUser = currentUser?.username === requestedUsername;
+  const isLoading =
+    isCurrentUserLoading || (isRequestedUserLoading && !isCurrentUser);
+  const user = isCurrentUser ? currentUser : requestedUser;
 
   const handleSignOut = async () => {
     try {
@@ -109,7 +68,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpdateUsername = async () => {
+  const handleUpdateUsername = () => {
     if (!newUsername.trim()) {
       toast.error("Username cannot be empty");
       return;
@@ -124,30 +83,18 @@ export default function ProfilePage() {
       );
       return;
     }
-    // Update username via API
-    try {
-      const response = await fetch("/api/auth/set-username", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: newUsername }),
-      });
 
-      if (!response.ok) {
-        const error = await response.json();
-        toast.error(error.error || "Failed to update username");
-        return;
+    setUsernameMutation.mutate(
+      { username: newUsername },
+      {
+        onSuccess: () => {
+          setEditingUsername(false);
+          setNewUsername("");
+          // Redirect to new username route
+          router.push(`/user/${newUsername}`);
+        },
       }
-
-      setUser({ ...user, username: newUsername } as User);
-      toast.success("Username updated successfully");
-      setEditingUsername(false);
-      setNewUsername("");
-      // Redirect to new username route
-      router.push(`/${newUsername}`);
-    } catch (error) {
-      console.error("Update username error:", error);
-      toast.error("Failed to update username");
-    }
+    );
   };
 
   if (isLoading) {
@@ -161,7 +108,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (userNotFound) {
+  if (requestedUserError && !isCurrentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -180,7 +127,21 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return null; // Will redirect to login
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">User Not Found</CardTitle>
+            <CardDescription>
+              An unexpected error occurred.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => router.push("/")}>Back to Home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -188,24 +149,43 @@ export default function ProfilePage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">
-            {isCurrentUser ? "Welcome to Puzzle Place!" : `${user.name}'s Profile`}
+            {isCurrentUser
+              ? "Welcome to Puzzle Place!"
+              : `${user.name || "User"}'s Profile`}
           </CardTitle>
           <CardDescription>
             {isCurrentUser
               ? "Your account has been created successfully"
-              : `View ${user.name}'s public profile`}
+              : `View ${user.name || "User"}'s public profile`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-center space-y-2">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto">
-              <span className="text-2xl text-primary-foreground font-bold">
-                {user.name.charAt(0).toUpperCase()}
-              </span>
+            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto overflow-hidden">
+              {user.image ? (
+                <Image
+                  src={user.image}
+                  alt={`${user.name || "User"}'s avatar`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-2xl text-primary-foreground font-bold">
+                  {user.name?.charAt(0).toUpperCase() || "?"}
+                </span>
+              )}
             </div>
+            {isCurrentUser && (
+              <div className="mt-2">
+                <AvatarUploader onUploadSuccess={() => queryClient.invalidateQueries({ queryKey: ["user"] })} />
+              </div>
+            )}
             <div>
-              <h3 className="text-lg font-semibold">{user.name}</h3>
-              <p className="text-muted-foreground">@{user.username}</p>
+              <h3 className="text-lg font-semibold">
+                {user.name || "Unknown"}
+              </h3>
+              <p className="text-muted-foreground">
+                {user.username ? `@${user.username}` : ""}
+              </p>
               {isCurrentUser && (
                 <p className="text-muted-foreground text-sm">{user.email}</p>
               )}
@@ -219,10 +199,14 @@ export default function ProfilePage() {
                   <span>Account Status:</span>
                   <span
                     className={
-                      user.emailVerified ? "text-green-600" : "text-yellow-600"
+                      user.emailVerified ?? false
+                        ? "text-green-600"
+                        : "text-yellow-600"
                     }
                   >
-                    {user.emailVerified ? "Verified" : "Pending Verification"}
+                    {user.emailVerified ?? false
+                      ? "Verified"
+                      : "Pending Verification"}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -282,7 +266,7 @@ export default function ProfilePage() {
               )}
 
               <div className="pt-4 space-y-2">
-                <Button className="w-full" onClick={() => router.push("/")}>
+                <Button className="w-full" onClick={() => router.push("/dashboard")}>
                   Go to Dashboard
                 </Button>
                 <Button
@@ -307,7 +291,10 @@ export default function ProfilePage() {
                 Member since {new Date(user.createdAt).toLocaleDateString()}
               </p>
               <div className="pt-4">
-                <Button className="w-full" onClick={() => router.push("/auth/login")}>
+                <Button
+                  className="w-full"
+                  onClick={() => router.push("/auth/login")}
+                >
                   Login to View More
                 </Button>
               </div>

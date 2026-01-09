@@ -1,27 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ username: string }> }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const { username } = await params;
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!username) {
-      return NextResponse.json(
-        { error: "Username is required" },
-        { status: 400 }
-      );
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { username },
+      where: { id: session.user.id },
       select: {
         id: true,
         name: true,
         email: true,
         username: true,
+        emailVerified: true,
         createdAt: true,
         image: true,
       },
@@ -33,10 +31,7 @@ export async function GET(
 
     return NextResponse.json({ user });
   } catch (error) {
-    console.error("Get user by username error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("Error fetching user:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

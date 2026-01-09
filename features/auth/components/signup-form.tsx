@@ -18,13 +18,15 @@ import { z } from "zod";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth/auth-client";
-import { GoogleSignInButton } from "@/components/google-signin-button";
+import { GoogleSignInButton } from "@/features/auth/components/google-signin-button";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Check, X, Loader2 } from "lucide-react";
 import { PasswordWithConfirmation } from "@/features/auth/components/password-with-confirmation";
+import { useCheckUsername } from "@/features/auth/api/use-check-username";
+import { useSetUsername } from "@/features/auth/api/use-set-username";
 
 const commonPasswords = [
   "password",
@@ -48,14 +50,20 @@ const formSchema = z
       .string()
       .min(3, "Username must be at least 3 characters")
       .max(20, "Username must be less than 20 characters")
-      .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+      .regex(
+        /^[a-zA-Z0-9_]+$/,
+        "Username can only contain letters, numbers, and underscores"
+      ),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
       .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
       .regex(/[a-z]/, "Password must contain at least one lowercase letter")
       .regex(/[0-9]/, "Password must contain at least one number")
-      .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+      .regex(
+        /[^A-Za-z0-9]/,
+        "Password must contain at least one special character"
+      ),
     confirmPassword: z.string(),
     terms: z
       .boolean()
@@ -81,10 +89,6 @@ export function SignupForm({
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [usernameStatus, setUsernameStatus] = useState<{
-    checking: boolean;
-    available: boolean | null;
-  }>({ checking: false, available: null });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -103,61 +107,25 @@ export function SignupForm({
     name: "username",
   });
 
-  useEffect(() => {
-    if (!watchedUsername || watchedUsername.length < 3) {
-      setUsernameStatus({ checking: false, available: null });
-      return;
-    }
+  const checkUsernameQuery = useCheckUsername({
+    username: watchedUsername,
+    enabled: watchedUsername.length >= 3,
+  });
 
-    setUsernameStatus({ checking: true, available: null });
-
-    const checkUsername = async () => {
-      try {
-        const response = await fetch("/api/auth/check-username", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: watchedUsername }),
-        });
-
-        if (response.ok) {
-          const { available } = await response.json();
-          setUsernameStatus({ checking: false, available });
-        } else {
-          setUsernameStatus({ checking: false, available: null });
-        }
-      } catch (error) {
-        console.error("Username check error:", error);
-        setUsernameStatus({ checking: false, available: null });
-      }
-    };
-
-    const timeoutId = setTimeout(checkUsername, 500); // Debounce 500ms
-    return () => clearTimeout(timeoutId);
-  }, [watchedUsername]);
+  const setUsernameMutation = useSetUsername();
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    // Check username availability
-    try {
-      const checkResponse = await fetch("/api/auth/check-username", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: data.username }),
-      });
-
-      if (!checkResponse.ok) {
-        const error = await checkResponse.json();
-        toast.error(error.error || "Username check failed");
-        return;
-      }
-
-      const { available } = await checkResponse.json();
-      if (!available) {
-        toast.error("Username is already taken");
-        return;
-      }
-    } catch (error) {
-      console.error("Username check error:", error);
-      toast.error("Failed to check username availability");
+    // Wait for username check if still loading
+    if (checkUsernameQuery.isLoading) {
+      toast.error("Please wait for username availability check");
+      return;
+    }
+    // Check if username is available
+    if (
+      checkUsernameQuery.data &&
+      checkUsernameQuery.data.available === false
+    ) {
+      toast.error("Username is already taken");
       return;
     }
 
@@ -179,20 +147,12 @@ export function SignupForm({
           setError(ctx.error.message || "Signup failed. Please try again.");
         },
         onSuccess: async () => {
+          await authClient.sendVerificationEmail({
+            email: data.email,
+          });
           // Set the username in the database
           try {
-            const response = await fetch("/api/auth/set-username", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username: data.username }),
-            });
-
-            if (!response.ok) {
-              const error = await response.json();
-              toast.error(error.error || "Failed to set username");
-              return;
-            }
-
+            await setUsernameMutation.mutateAsync({ username: data.username });
             toast.success("Account created successfully!");
             router.push("/auth/profile");
           } catch (error) {
@@ -204,8 +164,6 @@ export function SignupForm({
       }
     );
   }
-
-
 
   return (
     <Form {...form}>
@@ -262,21 +220,29 @@ export function SignupForm({
               </FormControl>
               {watchedUsername && watchedUsername.length >= 3 && (
                 <div className="flex items-center gap-2 text-sm">
-                  {usernameStatus.checking ? (
+                  {checkUsernameQuery.isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      <span className="text-muted-foreground">Checking availability...</span>
+                      <span className="text-muted-foreground">
+                        Checking availability...
+                      </span>
                     </>
-                  ) : usernameStatus.available === true ? (
+                  ) : checkUsernameQuery.data?.available === true ? (
                     <>
                       <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-green-600">Username is available</span>
+                      <span className="text-green-600">
+                        Username is available
+                      </span>
                     </>
-                  ) : usernameStatus.available === false ? (
+                  ) : checkUsernameQuery.data?.available === false ? (
                     <>
                       <X className="h-4 w-4 text-red-500" />
                       <span className="text-red-600">Username is taken</span>
                     </>
+                  ) : checkUsernameQuery.isError ? (
+                    <span className="text-red-600">
+                      Error checking username
+                    </span>
                   ) : null}
                 </div>
               )}
@@ -331,7 +297,14 @@ export function SignupForm({
         />
 
         <Field>
-          <Button type="submit" disabled={isLoading}>
+          <Button
+            type="submit"
+            disabled={
+              isLoading ||
+              checkUsernameQuery.isLoading ||
+              (checkUsernameQuery.data && !checkUsernameQuery.data.available)
+            }
+          >
             {isLoading ? "Creating Account..." : "Create Account"}
           </Button>
         </Field>

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { ForgotPasswordForm } from "@/components/forgot-password-form";
-import { AuthBranding } from "@/components/auth/AuthBranding";
+import { ForgotPasswordForm } from "@/features/auth/components/forgot-password-form";
+import { AuthBranding } from "@/features/auth/components/AuthBranding";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
       >
-      <Image
+        <Image
           width={100}
           height={100}
           src="/logo.jpg"

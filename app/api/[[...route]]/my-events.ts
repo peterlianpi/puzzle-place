@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/auth";
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { handleApiError } from "@/lib/api-errors";
 
 const createGameEventSchema = z.object({
   eventName: z.string().min(1, "Event name is required"),
@@ -161,6 +162,7 @@ const app = new Hono()
       );
     }
   )
+
   .get(
     "/:id",
 
@@ -223,6 +225,7 @@ const app = new Hono()
       );
     }
   )
+
   .patch("/:id", zValidator("json", updateGameEventSchema), async (c) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session?.user?.id) {
@@ -316,6 +319,7 @@ const app = new Hono()
       });
       return c.json({ message: "Event deleted" });
     }
-  );
+  )
+  .onError((error, c) => handleApiError(c, error));
 
 export default app;

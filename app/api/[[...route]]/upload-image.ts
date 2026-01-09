@@ -1,6 +1,6 @@
-// import { Hono } from "hono";
-// import { zValidator } from "@hono/zod-validator";
-// import { v2 as cloudinary } from "cloudinary";
+// This file was removed as it contains old, commented-out code.
+// The upload-image functionality is not currently implemented.
+
 // import { z } from "zod";
 // import { db } from "@/lib/db";
 // import { getOptionalOrganizationContext, optionalPermission } from "@/lib/security/tenant";

@@ -3,34 +3,28 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useGetUser } from "@/features/auth/api/use-get-user";
 
 export default function ProfileRedirectPage() {
   const router = useRouter();
+  const { data: userData, isLoading, error } = useGetUser();
 
   useEffect(() => {
-    const redirectToUsername = async () => {
-      try {
-        // Get user with username from DB
-        const response = await fetch("/api/auth/get-user");
-        if (response.ok) {
-          const { user } = await response.json();
-          if (user.username) {
-            router.replace(`/@${user.username}`);
-          } else {
-            // Username not set, stay on profile (could allow setting here)
-            router.replace("/auth/profile");
-          }
-        } else {
-          router.push("/auth/login");
-        }
-      } catch (error) {
-        console.error("Failed to get user:", error);
-        router.push("/auth/login");
-      }
-    };
+    if (isLoading) return;
 
-    redirectToUsername();
-  }, [router]);
+    if (error || !userData?.user) {
+      router.push("/auth/login");
+      return;
+    }
+
+    const user = userData.user;
+    if (user.username) {
+      router.replace(`/@${user.username}`);
+    } else {
+      // Username not set, stay on profile (could allow setting here)
+      router.replace("/auth/profile");
+    }
+  }, [userData, isLoading, error, router]);
 
   return (
     <motion.div
