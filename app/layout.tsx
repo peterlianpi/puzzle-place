@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -22,7 +23,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Puzzle Place - Game Events & Prize Pools",
-  description: "Create and manage game events with customizable prize pools. Join the fun with real-time prize distribution and competitive gameplay.",
+  description:
+    "Create and manage game events with customizable prize pools. Join the fun with real-time prize distribution and competitive gameplay.",
   keywords: "games, prizes, events, competition, puzzle, entertainment",
   authors: [{ name: "Puzzle Place Team" }],
   creator: "Puzzle Place",
@@ -53,6 +55,7 @@ export default function RootLayout({
           <QueryProvider>
             {children}
             <Toaster />
+            <Analytics />
           </QueryProvider>
         </ThemeProvider>
       </body>
