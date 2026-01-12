@@ -31,6 +31,7 @@ interface EventListProps {
   showCreateButton?: boolean;
   showEditButtons?: boolean;
   isLoading?: boolean;
+  onCreateClick?: () => void;
 }
 
 export default function EventList({
@@ -39,7 +40,8 @@ export default function EventList({
   baseUrl,
   showCreateButton = false,
   showEditButtons = false,
-  isLoading = false
+  isLoading = false,
+  onCreateClick
 }: EventListProps) {
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
   const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
@@ -112,11 +114,17 @@ export default function EventList({
             {viewMode === "card" ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
           </Button>
           {showCreateButton && (
-            <Link href={`${baseUrl}/create-event`}>
-              <Button size="sm">
+            onCreateClick ? (
+              <Button size="sm" onClick={onCreateClick}>
                 <Plus />
               </Button>
-            </Link>
+            ) : (
+              <Link href={`${baseUrl}/create-event`}>
+                <Button size="sm">
+                  <Plus />
+                </Button>
+              </Link>
+            )
           )}
         </div>
       </div>

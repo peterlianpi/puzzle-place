@@ -10,6 +10,7 @@ interface GoogleSignInButtonProps {
   setError: (error: string | null) => void;
   errorMessage: string;
   children: React.ReactNode;
+  redirectTo?: string;
 }
 
 export function GoogleSignInButton({
@@ -18,11 +19,13 @@ export function GoogleSignInButton({
   setError,
   errorMessage,
   children,
+  redirectTo,
 }: GoogleSignInButtonProps) {
   const handleGoogleSignIn = async () => {
     await authClient.signIn.social(
       {
         provider: "google",
+        ...(redirectTo && { redirectTo }),
       },
       {
         onRequest: () => {

@@ -19,6 +19,8 @@ import { useGetUser } from "@/features/auth/api/use-get-user";
 import { useGetUserByUsername } from "@/features/users/api/use-get-user-by-username";
 import { useSetUsername } from "@/features/auth/api/use-set-username";
 import { AvatarUploader } from "@/features/avatar/components/avatar-uploader";
+import { Logger } from "@/lib/logger";
+import { Check } from "lucide-react";
 import Image from "next/image";
 
 interface User {
@@ -150,7 +152,7 @@ export default function ProfilePage() {
       toast.success("Signed out successfully");
       router.push("/auth/login");
     } catch (error) {
-      console.error("Failed to sign out:", error);
+      Logger.devLog("Failed to sign out", error);
       toast.error("Failed to sign out");
     }
   };
@@ -169,7 +171,7 @@ export default function ProfilePage() {
       toast.success("Account deleted successfully");
       router.push("/");
     } catch (error) {
-      console.error("Failed to delete account:", error);
+      Logger.devLog("Failed to delete account", error);
       toast.error("Failed to delete account");
     }
   };
@@ -281,13 +283,18 @@ export default function ProfilePage() {
                   <span
                     className={
                       user.emailVerified ?? false
-                        ? "text-primary"
-                        : "text-muted-foreground"
+                        ? "text-green-600 flex items-center gap-1"
+                        : "text-red-600"
                     }
                   >
-                    {user.emailVerified ?? false
-                      ? "Verified"
-                      : "Pending Verification"}
+                    {user.emailVerified ?? false ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Verified
+                      </>
+                    ) : (
+                      "Pending Verification"
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -360,7 +367,9 @@ export default function ProfilePage() {
                           router.push(`/user/${value}`);
                         },
                         onError: (error) => {
-                          toast.error(error.message || "Failed to update username");
+                          toast.error(
+                            error.message || "Failed to update username"
+                          );
                           throw error;
                         },
                       }
@@ -385,7 +394,9 @@ export default function ProfilePage() {
                         newEmail: value,
                         callbackURL: "/dashboard",
                       });
-                      toast.success("Email change initiated. Please check your email for verification.");
+                      toast.success(
+                        "Email change initiated. Please check your email for verification."
+                      );
                     } catch (error) {
                       console.error("Failed to change email:", error);
                       toast.error("Failed to change email");

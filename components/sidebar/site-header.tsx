@@ -15,10 +15,11 @@ export function SiteHeader() {
     <header className="bg-background h-16 sticky top-0 z-50 flex w-full items-center border-b">
       <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
         <Button
-          className="h-8 w-8 hidden sm:flex"
+          className="h-10 w-10 hidden sm:flex"
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
+          aria-label="Toggle sidebar"
         >
           <SidebarIcon />
         </Button>
@@ -46,16 +47,15 @@ export function MenuButton({
     <Button
       variant="ghost"
       size="icon"
-      className={cn("h-10 w-10", className)}
+      className={cn("h-12 w-12 bg-muted/50 hover:bg-muted", className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
+      aria-label="Toggle navigation menu"
       {...props}
-      asChild
-    >
-      {!isMobile && open ? <X size={30} /> : <MenuIcon size={30} />}
-      {/* <span className="sr-only">Toggle Sidebar</span> */}
+asChild    >
+      {!isMobile && open ? <X size={24} /> : <MenuIcon size={24} />}
     </Button>
   );
 }

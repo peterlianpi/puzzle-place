@@ -19,10 +19,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { authClient } from "@/lib/auth/auth-client";
 import { GoogleSignInButton } from "@/features/auth/components/google-signin-button";
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getSession } from "better-auth/api";
 
 const formSchema = z.object({
   email: z.email("Invalid email address"),
@@ -33,7 +31,6 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +38,13 @@ export function LoginForm({
     // Initialize from URL parameter
     if (typeof window !== "undefined") {
       return new URLSearchParams(window.location.search).get("message");
+    }
+    return null;
+  });
+  const [redirectUrl] = useState<string | null>(() => {
+    // Initialize redirect from URL parameter
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("redirect");
     }
     return null;
   });
@@ -55,21 +59,6 @@ export function LoginForm({
     }
   }, [successMessage]);
 
-  useEffect(() => {
-    // Check if user is already authenticated and redirect to dashboard
-    const checkSession = async () => {
-      try {
-        const session = await authClient.getSession();
-        if (session.data?.user) {
-          router.push('/dashboard');
-        }
-      } catch (error) {
-        console.error('Session check failed:', error);
-      }
-    };
-    checkSession();
-  }, [router]);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -79,10 +68,13 @@ export function LoginForm({
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
+    // Prevent redirecting to auth pages after login
+    const safeRedirectUrl = redirectUrl && !redirectUrl.startsWith("/auth/") ? redirectUrl : "/dashboard";
     await authClient.signIn.email(
       {
         email: data.email,
         password: data.password,
+        // callbackURL: safeRedirectUrl,
       },
       {
         onRequest: () => {
@@ -94,10 +86,6 @@ export function LoginForm({
         },
         onError: (ctx) => {
           setError(ctx.error.message || "Login failed. Please try again.");
-        },
-        onSuccess: async () => {
-          // Get user session to redirect to profile
-          router.push("/auth/profile");
         },
       }
     );
@@ -194,13 +182,18 @@ export function LoginForm({
             setLoading={setGoogleLoading}
             setError={setError}
             errorMessage="Google login failed. Please try again."
+            redirectTo={redirectUrl || undefined}
           >
             Login with Google
           </GoogleSignInButton>
           <FieldDescription className="px-6 text-center">
             Don&apos;t have an account?{" "}
             <Link
-              href="/auth/signup"
+              href={`/auth/signup${
+                redirectUrl
+                  ? `?redirect=${encodeURIComponent(redirectUrl)}`
+                  : ""
+              }`}
               className="underline underline-offset-4 hover:underline"
             >
               Sign up

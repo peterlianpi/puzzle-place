@@ -4,6 +4,7 @@ import { useGetEvents } from "@/features/events/api/use-get-events";
 import EventList from "@/features/events/components/EventList";
 import LoadingSpinner from "@/components/sidebar/LoadingSpinner";
 import ErrorMessage from "@/components/error-handler/ErrorMessage";
+import { Logger } from "@/lib/logger";
 
 export default function PublicEventsPage() {
   const { data, isLoading, error } = useGetEvents({ limit: 20, offset: 0 });
@@ -13,7 +14,7 @@ export default function PublicEventsPage() {
   }
 
   if (error) {
-    console.error("Events fetch error:", error);
+    Logger.devLog("Events fetch error", error);
     return (
       <ErrorMessage
         title="Error loading events"
@@ -46,11 +47,13 @@ export default function PublicEventsPage() {
   const events = data.events || [];
 
   return (
-    <EventList
-      title="Events"
-      events={events}
-      baseUrl="/events"
-      isLoading={isLoading}
-    />
+    <div className="container mx-auto px-4 py-8">
+      <EventList
+        title="Events"
+        events={events}
+        baseUrl="/events"
+        isLoading={isLoading}
+      />
+    </div>
   );
 }

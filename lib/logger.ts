@@ -1,5 +1,3 @@
-import { prisma } from "@/lib/db/prisma";
-
 export interface LogData {
   type: "system" | "monitor" | "token" | "auth";
   message: string;
@@ -26,6 +24,7 @@ export class Logger {
     }
 
     try {
+      const { prisma } = await import("@/lib/db/prisma");
       await prisma.log.create({
         data: {
           type: data.type,

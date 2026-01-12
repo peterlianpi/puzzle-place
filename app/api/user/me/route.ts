@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
+import { Logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ user });
   } catch (error) {
-    console.error("Error fetching user:", error);
+    await Logger.error("Error fetching user", { details: String(error) });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

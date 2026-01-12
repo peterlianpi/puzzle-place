@@ -6,14 +6,32 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useGetEvent } from "@/features/events/api/use-get-event";
+import { useAuthStatus } from "@/features/auth/api/use-auth-status";
+import LoginPromptBanner from "@/features/auth/components/login-prompt-banner";
+import { useState } from "react";
+import { authClient } from "@/lib/auth/auth-client";
 
 export default function PublicEventPage() {
   const params = useParams();
   const id = params.id as string;
-
+  const {
+    data: session, // Full session object
+    isPending, // Loading state
+  } = authClient.useSession();
+  const [showLoginOverlay, setShowLoginOverlay] = useState(false);
+  const isAuthenticated = !!session?.user; // Boolean check
   const { data, isLoading, error } = useGetEvent(id);
 
-  if (isLoading) {
+  const handleJoinEvent = () => {
+    if (!isAuthenticated) {
+      setShowLoginOverlay(true);
+    } else {
+      // TODO: Implement join event logic
+      alert("Joining event... (not implemented yet)");
+    }
+  };
+
+  if (isLoading || isPending) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -75,6 +93,21 @@ export default function PublicEventPage() {
           </p>
         </div>
 
+        {!isAuthenticated && (
+          <div className="mb-6">
+            <LoginPromptBanner
+              message="Sign up to join events and win prizes!"
+              redirect={window.location.pathname}
+            />
+          </div>
+        )}
+
+        <div className="mb-6">
+          <Button onClick={handleJoinEvent} size="lg">
+            Join Event
+          </Button>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Prize Pool</CardTitle>
@@ -102,6 +135,15 @@ export default function PublicEventPage() {
             </div>
           </CardContent>
         </Card>
+
+        {showLoginOverlay && (
+          <LoginPromptBanner
+            title="Join Event"
+            message="You need to be logged in to join this event and participate."
+            action="Login to Join"
+            redirect={window.location.pathname}
+          />
+        )}
       </div>
     </div>
   );

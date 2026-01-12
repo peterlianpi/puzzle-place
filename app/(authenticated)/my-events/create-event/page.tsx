@@ -1,8 +1,10 @@
 "use client";
 
+import { lazy, Suspense } from "react";
 import { redirect } from "next/navigation";
-import CreateEventForm from "@/features/my-events/components/CreateEventForm";
 import { authClient } from "@/lib/auth/auth-client";
+
+const CreateEventForm = lazy(() => import("@/features/my-events/components/CreateEventForm"));
 
 export default function CreateEventPage() {
   const {
@@ -44,7 +46,13 @@ export default function CreateEventPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Create New Game Event</h1>
-      <CreateEventForm mode="create" />
+      <Suspense fallback={
+        <div className="flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <CreateEventForm mode="create" />
+      </Suspense>
     </div>
   );
 }

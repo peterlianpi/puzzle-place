@@ -6,8 +6,8 @@ import { Logger } from "@/lib/logger";
 // Protected routes requiring authentication
 const protectedRoutes = [
   /^\/dashboard/,
-  /^\/my-events/,
   /^\/events\/[^\/]+$/,
+  /^\/my-events/,
   /^\/my-events\/[^\/]+$/,
   /^\/user\//,
 ];
@@ -18,7 +18,7 @@ const authProtectedRoutes = ["/auth/change-password", "/auth/profile"];
 // Public auth pages that redirect if authenticated
 const authPublicRoutes = ["/auth/login", "/auth/signup"];
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Auth checks first - before creating response
@@ -33,8 +33,8 @@ export async function proxy(request: NextRequest) {
 
     if (isProtected || isAuthProtected) {
       if (!session) {
-        const loginUrl = new URL("/auth/login", request.url);
-        loginUrl.searchParams.set("callbackUrl", pathname);
+        const loginUrl = new URL("/login-prompt", request.url);
+        loginUrl.searchParams.set("redirect", pathname);
         return NextResponse.redirect(loginUrl);
       }
     }

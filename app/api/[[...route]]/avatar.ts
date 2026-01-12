@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
 import { handleApiError } from "@/lib/api-errors";
 import { v2 as cloudinary } from "cloudinary";
+import { Logger } from "@/lib/logger";
 import z from "zod";
 
 // Schema for upload
@@ -19,10 +20,12 @@ cloudinary.config({
 });
 
 // Debug logging for Cloudinary config
-console.log("Cloudinary config loaded:", {
-  cloud_name: !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: !!process.env.CLOUDINARY_API_SECRET,
+await Logger.info("Cloudinary config loaded", {
+  details: JSON.stringify({
+    cloud_name: !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+    api_secret: !!process.env.CLOUDINARY_API_SECRET,
+  }),
 });
 
 const app = new Hono()
@@ -63,7 +66,7 @@ const app = new Hono()
         imageUrl: uploadResult.secure_url,
       });
     } catch (error) {
-      console.error("Avatar upload error:", error);
+      await Logger.error("Avatar upload error", { details: String(error), userId: session.user.id });
       return c.json({ error: "Failed to upload avatar" }, 500);
     }
   })

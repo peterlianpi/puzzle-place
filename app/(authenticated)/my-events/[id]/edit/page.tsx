@@ -1,8 +1,10 @@
 "use client";
 
+import { lazy, Suspense } from "react";
 import { useParams } from "next/navigation";
 import { useGetGameEvent } from "@/features/my-events/api/use-get-game-event";
-import CreateEventForm from "@/features/my-events/components/CreateEventForm";
+
+const CreateEventForm = lazy(() => import("@/features/my-events/components/CreateEventForm"));
 
 export default function EditEventPage() {
   const params = useParams();
@@ -67,7 +69,13 @@ export default function EditEventPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Edit Event</h1>
-      <CreateEventForm mode="update" event={eventForForm} />
+      <Suspense fallback={
+        <div className="flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <CreateEventForm mode="update" event={eventForForm} />
+      </Suspense>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Context } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { ZodError } from "zod";
+import { Logger } from "@/lib/logger";
 
 export class ApiError extends Error {
   constructor(
@@ -19,7 +20,7 @@ export function handleApiError(
   error: unknown,
   defaultMessage?: string
 ): Response {
-  console.error("API Error:", error);
+  Logger.error("API Error", { details: String(error) });
 
   // Handle Zod validation errors
   if (error instanceof ZodError) {
@@ -130,7 +131,7 @@ export function handleError(
   error: unknown,
   defaultMessage?: string
 ): { error: string; code?: string } {
-  console.error("Server Action Error:", error);
+  Logger.error("Server Action Error", { details: String(error) });
 
   // Handle Zod validation errors
   if (error instanceof ZodError) {

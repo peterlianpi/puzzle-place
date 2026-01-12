@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useUploadAvatar } from "../api/use-upload-avatar";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth/auth-client";
 
 interface AvatarUploaderProps {
   onUploadSuccess?: (url: string) => void;
@@ -27,6 +28,8 @@ export function AvatarUploader({ onUploadSuccess }: AvatarUploaderProps) {
           imageData: base64,
         })) as { success: boolean; imageUrl?: string };
         if (result.success && result.imageUrl) {
+          // Refresh the session to update avatar in sidebar
+          await authClient.getSession();
           onUploadSuccess?.(result.imageUrl);
         }
       } catch (error) {

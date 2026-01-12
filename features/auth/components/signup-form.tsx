@@ -20,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth/auth-client";
 import { GoogleSignInButton } from "@/features/auth/components/google-signin-button";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Check, X, Loader2 } from "lucide-react";
@@ -89,6 +89,13 @@ export function SignupForm({
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [redirectUrl] = useState<string | null>(() => {
+    // Initialize redirect from URL parameter
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("redirect");
+    }
+    return null;
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -114,20 +121,7 @@ export function SignupForm({
 
   const setUsernameMutation = useSetUsername();
 
-  useEffect(() => {
-    // Check if user is already authenticated and redirect to dashboard
-    const checkSession = async () => {
-      try {
-        const session = await authClient.getSession();
-        if (session.data?.user) {
-          router.push('/dashboard');
-        }
-      } catch (error) {
-        console.error('Session check failed:', error);
-      }
-    };
-    checkSession();
-  }, [router]);
+
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     // Wait for username check if still loading
@@ -144,11 +138,14 @@ export function SignupForm({
       return;
     }
 
+    const safeRedirectUrl = redirectUrl && !redirectUrl.startsWith("/auth/") ? redirectUrl : "/auth/profile";
+
     await authClient.signUp.email(
       {
         email: data.email,
         password: data.password,
         name: data.name,
+        callbackURL: safeRedirectUrl,
       },
       {
         onRequest: () => {
@@ -169,11 +166,9 @@ export function SignupForm({
           try {
             await setUsernameMutation.mutateAsync({ username: data.username });
             toast.success("Account created successfully!");
-            router.push("/auth/profile");
           } catch (error) {
             console.error("Set username error:", error);
             toast.error("Account created but username setup failed");
-            router.push("/auth/profile");
           }
         },
       }
@@ -330,13 +325,18 @@ export function SignupForm({
             setLoading={setGoogleLoading}
             setError={setError}
             errorMessage="Google signup failed. Please try again."
+            redirectTo={redirectUrl || undefined}
           >
             Sign up with Google
           </GoogleSignInButton>
           <FieldDescription className="px-4 text-center">
             Already have an account?{" "}
             <Link
-              href="/auth/login"
+              href={`/auth/login${
+                redirectUrl
+                  ? `?redirect=${encodeURIComponent(redirectUrl)}`
+                  : ""
+              }`}
               className="underline underline-offset-4 hover:underline"
             >
               Sign in
