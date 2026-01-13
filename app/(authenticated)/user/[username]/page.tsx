@@ -19,7 +19,7 @@ import { useGetUser } from "@/features/auth/api/use-get-user";
 import { useGetUserByUsername } from "@/features/users/api/use-get-user-by-username";
 import { useSetUsername } from "@/features/auth/api/use-set-username";
 import { AvatarUploader } from "@/features/avatar/components/avatar-uploader";
-import { Logger } from "@/lib/logger";
+import { ClientLogger } from "@/lib/client-logger";
 import { Check } from "lucide-react";
 import Image from "next/image";
 
@@ -152,7 +152,7 @@ export default function ProfilePage() {
       toast.success("Signed out successfully");
       router.push("/auth/login");
     } catch (error) {
-      Logger.devLog("Failed to sign out", error);
+      ClientLogger.devLog("Failed to sign out", error);
       toast.error("Failed to sign out");
     }
   };
@@ -171,7 +171,7 @@ export default function ProfilePage() {
       toast.success("Account deleted successfully");
       router.push("/");
     } catch (error) {
-      Logger.devLog("Failed to delete account", error);
+      ClientLogger.devLog("Failed to delete account", error);
       toast.error("Failed to delete account");
     }
   };

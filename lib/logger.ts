@@ -1,3 +1,5 @@
+import "server-only";
+
 export interface LogData {
   type: "system" | "monitor" | "token" | "auth";
   message: string;

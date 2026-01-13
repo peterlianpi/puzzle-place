@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { client } from "@/lib/api/hono-client";
-import { Logger } from "@/lib/logger";
+import { ClientLogger } from "@/lib/client-logger";
 
 type SuccessResponse = { success: true; imageUrl: string };
 type ErrorResponse = { error: string };
@@ -18,19 +18,24 @@ export const useUploadAvatar = () => {
       return await response.json();
     },
     onSuccess: (data: ResponseType) => {
-      if ('imageUrl' in data) {
-        Logger.devLog("[AVATAR] Upload success, new image URL:", data.imageUrl);
+      if ("imageUrl" in data) {
+        ClientLogger.devLog(
+          "[AVATAR] Upload success, new image URL:",
+          data.imageUrl
+        );
         toast.success("Avatar uploaded successfully!");
         // Invalidate user-related queries
         queryClient.invalidateQueries({ queryKey: ["user"] });
         queryClient.invalidateQueries({ queryKey: ["get-user"] });
-      } else if ('error' in data) {
+      } else if ("error" in data) {
         // Handle API error responses
         toast.error(data.error || "Failed to upload avatar. Please try again.");
       }
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to upload avatar. Please try again.");
+      toast.error(
+        error.message || "Failed to upload avatar. Please try again."
+      );
     },
   });
 

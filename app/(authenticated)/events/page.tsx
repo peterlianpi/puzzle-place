@@ -4,7 +4,7 @@ import { useGetEvents } from "@/features/events/api/use-get-events";
 import EventList from "@/features/events/components/EventList";
 import LoadingSpinner from "@/components/sidebar/LoadingSpinner";
 import ErrorMessage from "@/components/error-handler/ErrorMessage";
-import { Logger } from "@/lib/logger";
+import { ClientLogger } from "@/lib/client-logger";
 
 export default function PublicEventsPage() {
   const { data, isLoading, error } = useGetEvents({ limit: 20, offset: 0 });
@@ -14,7 +14,7 @@ export default function PublicEventsPage() {
   }
 
   if (error) {
-    Logger.devLog("Events fetch error", error);
+    ClientLogger.devLog("Events fetch error", error);
     return (
       <ErrorMessage
         title="Error loading events"
