@@ -15,7 +15,8 @@ const prisma = new PrismaClient({
 const log = (message: string, level: 'info' | 'warn' | 'error' = 'info') => {
   const timestamp = new Date().toISOString();
   const prefix = level === 'error' ? '[ERROR]' : level === 'warn' ? '[WARN]' : '[INFO]';
-  console.log(`${timestamp} ${prefix} ${message}`);
+  // Use process.stdout.write for cleaner seed script output
+  process.stdout.write(`${timestamp} ${prefix} ${message}\n`);
 };
 
 // Database connection check with retry logic

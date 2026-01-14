@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useUploadAvatar } from "../api/use-upload-avatar";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
+import { Camera } from "lucide-react";
 
 interface AvatarUploaderProps {
   onUploadSuccess?: (url: string) => void;
@@ -53,8 +54,13 @@ export function AvatarUploader({ onUploadSuccess }: AvatarUploaderProps) {
         size="sm"
         onClick={() => fileInputRef.current?.click()}
         disabled={uploadMutation.isPending}
+        className="w-8 h-8 p-0"
       >
-        {uploadMutation.isPending ? "Uploading..." : "Upload Avatar"}
+        {uploadMutation.isPending ? (
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+        ) : (
+          <Camera className="h-4 w-4" />
+        )}
       </Button>
     </div>
   );

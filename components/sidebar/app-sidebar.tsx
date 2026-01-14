@@ -26,7 +26,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth/auth-client";
-import { ClientLogger } from "@/lib/client-logger";
 import Image from "next/image";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -46,7 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
     : null;
 
-  ClientLogger.devLog("[SIDEBAR] Session user:", { name: user?.name, avatar: user?.avatar });
+  
   const navMain = session
     ? [
         {

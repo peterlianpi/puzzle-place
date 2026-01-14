@@ -61,7 +61,7 @@ describe("useUploadAvatar", () => {
       }),
     } as unknown as ReturnType<typeof client.api.avatar.upload.$post>;
 
-    vi.mocked(client.api.avatar.upload.$post).mockResolvedValue(await mockResponse);
+    (client.api.avatar.upload.$post as any).mockResolvedValue(mockResponse);
 
     const { result } = renderHook(() => useUploadAvatar(), { wrapper });
 
@@ -86,7 +86,9 @@ describe("useUploadAvatar", () => {
   });
 
   it("should handle upload error", async () => {
-    vi.mocked(client.api.avatar.upload.$post).mockRejectedValue(new Error("Upload failed"));
+    (client.api.avatar.upload.$post as any).mockRejectedValue(
+      new Error("Upload failed")
+    );
 
     const { result } = renderHook(() => useUploadAvatar(), { wrapper });
 

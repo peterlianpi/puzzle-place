@@ -9,26 +9,26 @@ export default function ProfileRedirectPage() {
   const router = useRouter();
   const { data: userData, isLoading, error } = useGetUser();
 
-  // useEffect(() => {
-  //   if (isLoading) return;
+  useEffect(() => {
+    if (isLoading) return;
 
-  //   if (error || !userData?.user) {
-  //     router.push("/auth/login");
-  //     return;
-  //   }
+    if (error || !userData?.user) {
+      router.push("/auth/login");
+      return;
+    }
 
-  //   const user = userData.user;
-  //   const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
+    const user = userData.user;
+    const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
 
-  //   if (redirectUrl) {
-  //     router.replace(redirectUrl);
-  //   } else if (user.username) {
-  //     router.replace(`/@${user.username}`);
-  //   } else {
-  //     // Username not set, stay on profile (could allow setting here)
-  //     router.replace("/auth/profile");
-  //   }
-  // }, [userData, isLoading, error, router]);
+    if (redirectUrl) {
+      router.replace(redirectUrl);
+    } else if (user.username) {
+      router.replace(`/@${user.username}`);
+    } else {
+      // Username not set, stay on profile (could allow setting here)
+      router.replace("/auth/profile");
+    }
+  }, [userData, isLoading, error, router]);
 
   return (
     <motion.div

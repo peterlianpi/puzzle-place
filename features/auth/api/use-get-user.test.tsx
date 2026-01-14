@@ -52,7 +52,7 @@ describe('useGetUser', () => {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(client.api["auth-user"]["get-user"].$get).mockResolvedValue(mockResponse as any);
+    (client.api["auth-user"]["get-user"].$get as any).mockResolvedValue(mockResponse);
 
     const { result } = renderHook(() => useGetUser(), { wrapper });
 
@@ -66,7 +66,7 @@ describe('useGetUser', () => {
 
   it('should handle fetch error', async () => {
     const mockError = new Error('Failed to fetch user');
-    vi.mocked(client.api["auth-user"]["get-user"].$get).mockRejectedValue(mockError);
+    (client.api["auth-user"]["get-user"].$get as any).mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useGetUser(), { wrapper });
 

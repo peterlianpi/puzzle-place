@@ -1,0 +1,36 @@
+{
+  "exportDate": "2026-01-13T05:54:11.990Z",
+  "user": {
+    "id": "27EdiKsGBXlem5T7nTvlgUndsygDmNEQ",
+    "name": "Peter Pau Sian Lian",
+    "username": "peterpausianlian",
+    "email": "[REDACTED]",
+    "bio": null,
+    "theme": "system",
+    "language": "en",
+    "timezone": null,
+    "isProfilePublic": true,
+    "showEmail": false,
+    "showStats": true,
+    "showActivity": true,
+    "allowDataExport": true,
+    "marketingEmails": false,
+    "securityEmails": true,
+    "createdAt": "2026-01-09T17:42:35.389Z",
+    "updatedAt": "2026-01-13T05:36:56.348Z",
+    "createdEvents": [
+      {
+        "EventID": "cmk772dgf004cvo9wgn5asbka",
+        "EventName": "Test 1",
+        "Description": "",
+        "CreatedAt": "2026-01-09T18:13:08.127Z"
+      }
+    ],
+    "gameHistories": []
+  },
+  "metadata": {
+    "exportedBy": "Puzzle Place",
+    "version": "1.0",
+    "note": "This data export includes your profile information and activity history."
+  }
+}

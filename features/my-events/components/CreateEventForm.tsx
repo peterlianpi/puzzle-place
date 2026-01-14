@@ -19,7 +19,6 @@ import {
 import { useCreateGameEvent } from "../api/use-create-game-event";
 import { useUpdateGameEvent } from "../api/use-update-game-event";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 const prizeSchema = z.object({
   name: z.string().min(1, "Prize name is required"),
@@ -234,20 +233,13 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
           </div>
         }
 
-        <div className="flex gap-4">
-          <Link href="/my-events">
-            <Button type="button" variant="outline" className="flex-1">
-              Back
-            </Button>
-          </Link>
-          <Button
-            type="submit"
-            disabled={createEvent.isPending || updateEvent.isPending}
-            className="flex-1"
-          >
-            {mode === 'create' ? (createEvent.isPending ? "Creating..." : "Create Event") : (updateEvent.isPending ? "Updating..." : "Update Event")}
-          </Button>
-        </div>
+        <Button
+          type="submit"
+          disabled={createEvent.isPending || updateEvent.isPending}
+          className="w-full"
+        >
+          {mode === 'create' ? (createEvent.isPending ? "Creating..." : "Create Event") : (updateEvent.isPending ? "Updating..." : "Update Event")}
+        </Button>
       </form>
     </Form>
   );

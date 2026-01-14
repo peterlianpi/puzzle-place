@@ -14,18 +14,29 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String?
-  username      String?        @unique
-  email         String         @unique
-  emailVerified Boolean?       @default(false)
-  image         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  logs          Log[]
-  verifications Verification[]
+  id              String         @id @default(cuid())
+  name            String?
+  username        String?        @unique
+  email           String         @unique
+  emailVerified   Boolean?       @default(false)
+  image           String?
+  bio             String?        @db.Text
+  theme           String?        @default("system") // 'light', 'dark', 'system'
+  language        String?        @default("en")
+  timezone        String?
+  isProfilePublic Boolean?       @default(true)
+  showEmail       Boolean?       @default(false)
+  showStats       Boolean?       @default(true)
+  showActivity    Boolean?       @default(true)
+  allowDataExport Boolean?       @default(true)
+  marketingEmails Boolean?       @default(false)
+  securityEmails  Boolean?       @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  logs            Log[]
+  verifications   Verification[]
 
   PasswordHash String?
 

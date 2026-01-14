@@ -40,8 +40,8 @@ describe('/api/events', () => {
         },
       ];
 
-      vi.mocked(prisma.gameEvent.findMany).mockResolvedValue(mockEvents);
-      vi.mocked(prisma.gameEvent.count).mockResolvedValue(1);
+      (prisma.gameEvent.findMany as any).mockResolvedValue(mockEvents);
+      (prisma.gameEvent.count as any).mockResolvedValue(1);
 
       const request = new Request('http://localhost:3000/?limit=20&offset=0');
       const response = await events.request(request);
@@ -97,8 +97,8 @@ describe('/api/events', () => {
     });
 
     it('should handle pagination parameters', async () => {
-      vi.mocked(prisma.gameEvent.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.gameEvent.count).mockResolvedValue(50);
+      (prisma.gameEvent.findMany as any).mockResolvedValue([]);
+      (prisma.gameEvent.count as any).mockResolvedValue(50);
 
       const request = new Request('http://localhost:3000/?limit=10&offset=20');
       const response = await events.request(request);
@@ -113,8 +113,8 @@ describe('/api/events', () => {
     });
 
     it('should use default pagination values', async () => {
-      vi.mocked(prisma.gameEvent.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.gameEvent.count).mockResolvedValue(0);
+      (prisma.gameEvent.findMany as any).mockResolvedValue([]);
+      (prisma.gameEvent.count as any).mockResolvedValue(0);
 
       const request = new Request('http://localhost:3000/');
       const response = await events.request(request);
@@ -129,8 +129,8 @@ describe('/api/events', () => {
     });
 
     it('should set correct cache headers', async () => {
-      vi.mocked(prisma.gameEvent.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.gameEvent.count).mockResolvedValue(0);
+      (prisma.gameEvent.findMany as any).mockResolvedValue([]);
+      (prisma.gameEvent.count as any).mockResolvedValue(0);
 
       const request = new Request('http://localhost:3000/');
       const response = await events.request(request);
@@ -139,7 +139,7 @@ describe('/api/events', () => {
     });
 
     it('should handle database errors', async () => {
-      vi.mocked(prisma.gameEvent.findMany).mockRejectedValue(new Error('Database error'));
+      (prisma.gameEvent.findMany as any).mockRejectedValue(new Error('Database error'));
 
       const request = new Request('http://localhost:3000/');
       const response = await events.request(request);
@@ -170,7 +170,7 @@ describe('/api/events', () => {
         ],
       };
 
-      vi.mocked(prisma.gameEvent.findFirst).mockResolvedValue(mockEvent);
+      (prisma.gameEvent.findFirst as any).mockResolvedValue(mockEvent);
 
       const request = new Request('http://localhost:3000/event1');
       const response = await events.request(request);
@@ -202,7 +202,7 @@ describe('/api/events', () => {
     });
 
     it('should return 404 for non-existent event', async () => {
-      vi.mocked(prisma.gameEvent.findFirst).mockResolvedValue(null);
+      (prisma.gameEvent.findFirst as any).mockResolvedValue(null);
 
       const request = new Request('http://localhost:3000/non-existent');
       const response = await events.request(request);
@@ -213,7 +213,7 @@ describe('/api/events', () => {
     });
 
     it('should return 404 for invalid ID', async () => {
-      vi.mocked(prisma.gameEvent.findFirst).mockResolvedValue(null);
+      (prisma.gameEvent.findFirst as any).mockResolvedValue(null);
 
       const request = new Request('http://localhost:3000/invalid');
       const response = await events.request(request);
@@ -224,7 +224,7 @@ describe('/api/events', () => {
     });
 
     it('should handle database errors for single event', async () => {
-      vi.mocked(prisma.gameEvent.findFirst).mockRejectedValue(new Error('Database error'));
+      (prisma.gameEvent.findFirst as any).mockRejectedValue(new Error('Database error'));
 
       const request = new Request('http://localhost:3000/event1');
       const response = await events.request(request);

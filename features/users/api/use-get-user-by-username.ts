@@ -51,6 +51,7 @@ export const useGetUserByUsername = ({
       };
     },
     enabled: enabled && !!username,
+    staleTime: 5 * 60 * 1000, // 5 minutes - user profiles don't change often
   });
   return query;
 };

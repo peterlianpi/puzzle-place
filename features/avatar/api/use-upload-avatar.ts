@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { client } from "@/lib/api/hono-client";
-import { ClientLogger } from "@/lib/client-logger";
 
 type SuccessResponse = { success: true; imageUrl: string };
 type ErrorResponse = { error: string };
@@ -19,10 +18,7 @@ export const useUploadAvatar = () => {
     },
     onSuccess: (data: ResponseType) => {
       if ("imageUrl" in data) {
-        ClientLogger.devLog(
-          "[AVATAR] Upload success, new image URL:",
-          data.imageUrl
-        );
+        
         toast.success("Avatar uploaded successfully!");
         // Invalidate user-related queries
         queryClient.invalidateQueries({ queryKey: ["user"] });

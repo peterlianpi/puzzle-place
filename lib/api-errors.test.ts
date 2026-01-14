@@ -1,13 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
+
+// Mock server-only before importing anything that uses it
+vi.mock('server-only', () => ({}));
+
 import { ApiError, handleApiError, handleError } from './api-errors';
 import { ZodError } from 'zod';
-
-// Mock logger
-vi.mock('./logger', () => ({
-  Logger: {
-    error: vi.fn(),
-  },
-}));
 
 // Mock context type for testing
 interface MockContext {
@@ -139,9 +136,8 @@ describe('API Error Handling', () => {
     });
 
     it('should handle generic errors in development', () => {
-      // Mock NODE_ENV using vi
       const originalEnv = process.env.NODE_ENV;
-      vi.stubEnv('NODE_ENV', 'development');
+      (process.env as any).NODE_ENV = 'development';
 
       const genericError = new Error('Something went wrong');
 
@@ -162,11 +158,12 @@ describe('API Error Handling', () => {
       );
 
       // Restore original env
-      vi.unstubAllEnvs();
+      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('should handle generic errors in production', () => {
-      vi.stubEnv('NODE_ENV', 'production');
+      const originalEnv = process.env.NODE_ENV;
+      (process.env as any).NODE_ENV = 'production';
 
       const genericError = new Error('Something went wrong');
 
@@ -185,7 +182,7 @@ describe('API Error Handling', () => {
         500
       );
 
-      vi.unstubAllEnvs();
+      (process.env as any).NODE_ENV = originalEnv;
     });
   });
 
@@ -232,7 +229,8 @@ describe('API Error Handling', () => {
     });
 
     it('should handle generic errors in development', () => {
-      vi.stubEnv('NODE_ENV', 'development');
+      const originalEnv = process.env.NODE_ENV;
+      (process.env as any).NODE_ENV = 'development';
 
       const genericError = new Error('Something went wrong');
 
@@ -243,11 +241,12 @@ describe('API Error Handling', () => {
         code: 'INTERNAL_ERROR',
       });
 
-      vi.unstubAllEnvs();
+      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('should handle generic errors in production', () => {
-      vi.stubEnv('NODE_ENV', 'production');
+      const originalEnv = process.env.NODE_ENV;
+      (process.env as any).NODE_ENV = 'production';
 
       const genericError = new Error('Something went wrong');
 
@@ -258,7 +257,7 @@ describe('API Error Handling', () => {
         code: 'INTERNAL_ERROR',
       });
 
-      vi.unstubAllEnvs();
+      (process.env as any).NODE_ENV = originalEnv;
     });
   });
 });

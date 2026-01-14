@@ -44,8 +44,13 @@ export default function CreateEventPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Create New Game Event</h1>
+    <div className="space-y-6 md:space-y-8">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Create New Game Event</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-2">
+            Set up your prize wheel event with custom prizes and values
+          </p>
+        </div>
       <Suspense fallback={
         <div className="flex justify-center items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
