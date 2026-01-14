@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
+import { handleApiError } from "@/lib/api-errors";
+import { Logger } from "@/lib/logger";
 
 const app = new Hono()
 
@@ -34,6 +36,40 @@ const app = new Hono()
 
       return c.json(users);
     }
-  );
+  )
+
+  // Get User by Username Endpoint
+  .get("/:username", async (c) => {
+    try {
+      const username = c.req.param("username");
+
+      if (!username) {
+        return c.json({ error: "Username is required" }, 400);
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { username },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          username: true,
+          createdAt: true,
+          image: true,
+        },
+      });
+
+      if (!user) {
+        return c.json({ error: "User not found" }, 404);
+      }
+
+      return c.json({ user });
+    } catch (error) {
+      await Logger.error("Get user by username error", { details: String(error) });
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  })
+
+  .onError((error, c) => handleApiError(c, error));
 
 export default app;

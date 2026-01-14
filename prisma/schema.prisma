@@ -14,18 +14,29 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String?
-  username      String?        @unique
-  email         String         @unique
-  emailVerified Boolean?       @default(false)
-  image         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  logs          Log[]
-  verifications Verification[]
+  id              String         @id @default(cuid())
+  name            String?
+  username        String?        @unique
+  email           String         @unique
+  emailVerified   Boolean?       @default(false)
+  image           String?
+  bio             String?        @db.Text
+  theme           String?        @default("system") // 'light', 'dark', 'system'
+  language        String?        @default("en")
+  timezone        String?
+  isProfilePublic Boolean?       @default(true)
+  showEmail       Boolean?       @default(false)
+  showStats       Boolean?       @default(true)
+  showActivity    Boolean?       @default(true)
+  allowDataExport Boolean?       @default(true)
+  marketingEmails Boolean?       @default(false)
+  securityEmails  Boolean?       @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  logs            Log[]
+  verifications   Verification[]
 
   PasswordHash String?
 
@@ -117,7 +128,7 @@ model Log {
 }
 
 model GameEvent {
-  EventID       Int      @id @default(autoincrement())
+  EventID       String   @id @default(cuid())
   CreatorUserID String
   creator       User     @relation(fields: [CreatorUserID], references: [id])
   EventName     String
@@ -136,8 +147,8 @@ model GameEvent {
 }
 
 model EventPrizePool {
-  PrizeID      Int       @id @default(autoincrement())
-  EventID      Int
+  PrizeID      String    @id @default(cuid())
+  EventID      String
   Event        GameEvent @relation(fields: [EventID], references: [EventID])
   PrizeName    String
   PrizeValue   Decimal   @db.Decimal(18, 2)
@@ -149,8 +160,8 @@ model EventPrizePool {
 }
 
 model GameHistory {
-  HistoryID     Int       @id @default(autoincrement())
-  EventID       Int
+  HistoryID     String    @id @default(cuid())
+  EventID       String
   Event         GameEvent @relation(fields: [EventID], references: [EventID])
   PlayerUserID  String
   playerUser    User      @relation(fields: [PlayerUserID], references: [id])
@@ -161,4 +172,18 @@ model GameHistory {
   @@index([EventID])
   @@index([PlayerUserID])
   @@map("Tbl_GameHistory")
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  content   String   @db.Text
+  avatar    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("testimonial")
 }

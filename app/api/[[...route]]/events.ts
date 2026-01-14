@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/auth";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import z from "zod";
+import { handleApiError } from "@/lib/api-errors";
 
 const app = new Hono()
 
@@ -80,9 +81,9 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const { id: param } = c.req.valid("param"); // Extract account ID from URL params
-      const id = parseInt(param);
-      if (isNaN(id)) {
+      const { id } = c.req.valid("param");
+
+      if (!id) {
         return c.json({ error: "Invalid ID" }, 400);
       }
 
@@ -124,6 +125,7 @@ const app = new Hono()
         }
       );
     }
-  );
+  )
+  .onError((error, c) => handleApiError(c, error));
 
 export default app;

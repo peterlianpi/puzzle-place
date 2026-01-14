@@ -1,7 +1,54 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth/auth";
+import { Logger } from "@/lib/logger";
 
-export function proxy(request: NextRequest) {
+// Protected routes requiring authentication
+const protectedRoutes = [
+  /^\/dashboard/,
+  /^\/events\/[^\/]+$/,
+  /^\/my-events/,
+  /^\/my-events\/[^\/]+$/,
+  /^\/user\//,
+];
+
+// Auth pages requiring authentication
+const authProtectedRoutes = ["/auth/change-password", "/auth/profile"];
+
+// Public auth pages that redirect if authenticated
+const authPublicRoutes = ["/auth/login", "/auth/signup"];
+
+export default async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Auth checks first - before creating response
+  try {
+    await Logger.info(`Middleware: Checking session for ${pathname}`);
+    const session = await auth.api.getSession({ headers: request.headers });
+    await Logger.info(`Middleware: Session found: ${!!session?.user?.id}`);
+
+    const isProtected = protectedRoutes.some((route) => route.test(pathname));
+    const isAuthProtected = authProtectedRoutes.includes(pathname);
+    const isAuthPublic = authPublicRoutes.includes(pathname);
+
+    if (isProtected || isAuthProtected) {
+      if (!session) {
+        const loginUrl = new URL("/login-prompt", request.url);
+        loginUrl.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+
+    if (isAuthPublic && session) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  } catch (error) {
+    await Logger.error("Middleware auth check failed", {
+      details: JSON.stringify(error),
+    });
+    // Continue to allow access on error
+  }
+
   // Clone the response
   const res = NextResponse.next();
 
@@ -22,7 +69,7 @@ export function proxy(request: NextRequest) {
       request.method === "POST" &&
       request.nextUrl.pathname.includes("/auth/")
     ) {
-      console.log(
+      await Logger.info(
         `Auth API call from IP: ${clientIP} at ${new Date().toISOString()}`
       );
     }
@@ -35,11 +82,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/auth (handled by Better Auth)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * Note: Removed api/auth exclusion since auth checks may be needed elsewhere
      */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

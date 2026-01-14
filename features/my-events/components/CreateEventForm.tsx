@@ -19,7 +19,6 @@ import {
 import { useCreateGameEvent } from "../api/use-create-game-event";
 import { useUpdateGameEvent } from "../api/use-update-game-event";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 const prizeSchema = z.object({
   name: z.string().min(1, "Prize name is required"),
@@ -44,7 +43,7 @@ type CreateEventFormData = z.infer<typeof createEventSchema>;
 interface GameEventFormProps {
   mode: 'create' | 'update';
   event?: {
-    eventId: number;
+    eventId: string;
     eventName: string;
     description?: string;
     prizes: { name: string; value: number; isBlank: boolean; }[];
@@ -98,7 +97,7 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
       }
     } else if (mode === 'update' && event) {
       await updateEvent.mutateAsync({
-        id: event.eventId.toString(),
+        id: event.eventId,
         eventName: data.eventName,
         description: data.description,
         prizes: data.prizes,
@@ -141,7 +140,7 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
         {
           <div>
             <FormLabel>Prizes</FormLabel>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Add prizes sorted from highest to lowest value. At least 5 prizes
               required, with at least 1 non-blank prize.
             </p>
@@ -219,7 +218,7 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
             </div>
             {form.formState.errors.prizes &&
               typeof form.formState.errors.prizes.message === "string" && (
-                <p className="text-red-500 text-sm">
+                <p className="text-destructive text-sm">
                   {form.formState.errors.prizes.message}
                 </p>
               )}
@@ -234,20 +233,13 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
           </div>
         }
 
-        <div className="flex gap-4">
-          <Link href="/my-events">
-            <Button type="button" variant="outline" className="flex-1">
-              Back
-            </Button>
-          </Link>
-          <Button
-            type="submit"
-            disabled={createEvent.isPending || updateEvent.isPending}
-            className="flex-1"
-          >
-            {mode === 'create' ? (createEvent.isPending ? "Creating..." : "Create Event") : (updateEvent.isPending ? "Updating..." : "Update Event")}
-          </Button>
-        </div>
+        <Button
+          type="submit"
+          disabled={createEvent.isPending || updateEvent.isPending}
+          className="w-full"
+        >
+          {mode === 'create' ? (createEvent.isPending ? "Creating..." : "Create Event") : (updateEvent.isPending ? "Updating..." : "Update Event")}
+        </Button>
       </form>
     </Form>
   );

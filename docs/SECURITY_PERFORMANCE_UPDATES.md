@@ -47,11 +47,13 @@ This document outlines the recent improvements made to enhance security, perform
 ### API Endpoints
 - GET `/api/events`: Public events listing (paginated with caching)
 - GET `/api/events/:id`: Public event details (optimized with select fields and caching)
-- GET `/api/my-events`: User events listing (paginated with user filtering)
+- GET `/api/my-events`: User events listing (paginated with user filtering and ownership validation)
 - GET `/api/my-events/:id`: User event details (with ownership validation)
-- POST `/api/my-events`: Create new events
-- PATCH `/api/my-events/:id`: Update user events (including prize pools)
+- POST `/api/my-events`: Create new events (with validation and prize sorting)
+- PATCH `/api/my-events/:id`: Update user events (including prize pools replacement)
 - DELETE `/api/my-events/:id`: Delete user events
+
+See `API.md` for comprehensive API documentation including request/response schemas, validation rules, and error handling.
 
 ## Recent Architecture Improvements
 
@@ -83,3 +85,8 @@ This document outlines the recent improvements made to enhance security, perform
 - Page load times
 - Cache hit rates
 - Security audit results
+
+---
+
+**Last Updated:** January 9, 2026
+**Version:** 1.0.0

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,143 +12,96 @@ import {
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth/auth-client";
 import { toast } from "sonner";
+import { useGetUser } from "@/features/auth/api/use-get-user";
+import { useGetUserByUsername } from "@/features/users/api/use-get-user-by-username";
+import { ClientLogger } from "@/lib/client-logger";
+import { ProfileHeader } from "@/features/profile/components/ProfileHeader";
+import { ProfileStats } from "@/features/profile/components/ProfileStats";
+import { ProfileSettings } from "@/features/profile/components/ProfileSettings";
+import { ProfileActions } from "@/features/profile/components/ProfileActions";
+import { InlineEdit } from "@/components/ui/inline-edit";
+import { AvatarUploader } from "@/features/avatar/components/avatar-uploader";
+import { Check } from "lucide-react";
+import Image from "next/image";
+import { useQueryClient } from "@tanstack/react-query";
 import { useResendVerification } from "@/features/auth/api/use-resend-verification";
+import { useSetUsername } from "@/features/auth/api/use-set-username";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfilePrivacy } from "@/features/profile/components/ProfilePrivacy";
+import { ProfilePreferences } from "@/features/profile/components/ProfilePreferences";
 
 interface User {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
-  username?: string;
-  emailVerified: boolean;
-  image?: string;
+  username: string | null;
+  emailVerified?: boolean | null;
+  image?: string | null;
   createdAt: Date;
 }
 
 export default function ProfilePage() {
   const router = useRouter();
   const params = useParams();
+  const queryClient = useQueryClient();
   const requestedUsername = params.username as string;
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCurrentUser, setIsCurrentUser] = useState(false);
-  const [editingUsername, setEditingUsername] = useState(false);
-  const [userNotFound, setUserNotFound] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
+
+  const { data: currentUserData, isLoading: isCurrentUserLoading } =
+    useGetUser();
+  const {
+    data: requestedUserData,
+    isLoading: isRequestedUserLoading,
+    error: requestedUserError,
+  } = useGetUserByUsername({
+    username: requestedUsername,
+  });
   const resendVerificationMutation = useResendVerification();
+  const setUsernameMutation = useSetUsername();
 
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        // First, try to get current authenticated user
-        const authResponse = await fetch("/api/auth/get-user");
-        let currentUser = null;
+  const currentUser = currentUserData?.user;
+  const requestedUser = requestedUserData?.user;
+  const isCurrentUser = useMemo(
+    () => currentUser?.username === requestedUsername,
+    [currentUser?.username, requestedUsername]
+  );
+  const isLoading = useMemo(
+    () => isCurrentUserLoading || (isRequestedUserLoading && !isCurrentUser),
+    [isCurrentUserLoading, isRequestedUserLoading, isCurrentUser]
+  );
+  const user = useMemo(
+    () => (isCurrentUser ? currentUser : requestedUser),
+    [isCurrentUser, currentUser, requestedUser]
+  );
 
-        if (authResponse.ok) {
-          const { user } = await authResponse.json();
-          currentUser = user;
-        }
-        // Note: Don't redirect on auth failure - allow public access
-
-        // Check if this is the current user's profile
-        if (currentUser && currentUser.username === requestedUsername) {
-          // Show editable profile for current user
-          setUser(currentUser);
-          setIsCurrentUser(true);
-        } else {
-          // Try to get the requested user (public view)
-          const publicResponse = await fetch(`/api/users/${requestedUsername}`);
-          if (publicResponse.ok) {
-            const { user: publicUser } = await publicResponse.json();
-            setUser(publicUser);
-            setIsCurrentUser(!!currentUser && currentUser.username === requestedUsername);
-          } else if (publicResponse.status === 404) {
-            // User not found
-            router.push("/404");
-            return;
-          } else {
-            // Other error - show a generic error or fallback
-            setUser({
-              id: "error",
-              name: "User",
-              username: requestedUsername,
-              email: "",
-              emailVerified: false,
-              createdAt: new Date(),
-            } as User);
-            setIsCurrentUser(false);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to get user:", error);
-        // Show error state instead of redirecting
-        setUser({
-          id: "error",
-          name: "Error",
-          username: requestedUsername,
-          email: "",
-          emailVerified: false,
-          createdAt: new Date(),
-        } as User);
-        setIsCurrentUser(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getUser();
-  }, [router, requestedUsername]);
-
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       await authClient.signOut();
       toast.success("Signed out successfully");
       router.push("/auth/login");
     } catch (error) {
-      console.error("Failed to sign out:", error);
+      console.log("Failed to sign out", error);
       toast.error("Failed to sign out");
     }
-  };
+  }, [router]);
 
-  const handleUpdateUsername = async () => {
-    if (!newUsername.trim()) {
-      toast.error("Username cannot be empty");
+  const handleDeleteAccount = useCallback(async () => {
+    if (
+      !confirm(
+        "Are you sure you want to delete your account? This action cannot be undone."
+      )
+    ) {
       return;
     }
-    if (newUsername.length < 3 || newUsername.length > 20) {
-      toast.error("Username must be 3-20 characters");
-      return;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) {
-      toast.error(
-        "Username can only contain letters, numbers, and underscores"
-      );
-      return;
-    }
-    // Update username via API
+
     try {
-      const response = await fetch("/api/auth/set-username", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: newUsername }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        toast.error(error.error || "Failed to update username");
-        return;
-      }
-
-      setUser({ ...user, username: newUsername } as User);
-      toast.success("Username updated successfully");
-      setEditingUsername(false);
-      setNewUsername("");
-      // Redirect to new username route
-      router.push(`/${newUsername}`);
+      await authClient.deleteUser();
+      toast.success("Account deleted successfully");
+      router.push("/");
     } catch (error) {
-      console.error("Update username error:", error);
-      toast.error("Failed to update username");
+      console.log("Failed to delete account", error);
+      toast.error("Failed to delete account");
     }
-  };
+  }, [router]);
 
   if (isLoading) {
     return (
@@ -161,7 +114,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (userNotFound) {
+  if (requestedUserError && !isCurrentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -180,141 +133,93 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return null; // Will redirect to login
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">User Not Found</CardTitle>
+            <CardDescription>An unexpected error occurred.</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => router.push("/")}>Back to Home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
-            {isCurrentUser ? "Welcome to Puzzle Place!" : `${user.name}'s Profile`}
-          </CardTitle>
-          <CardDescription>
-            {isCurrentUser
-              ? "Your account has been created successfully"
-              : `View ${user.name}'s public profile`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto">
-              <span className="text-2xl text-primary-foreground font-bold">
-                {user.name.charAt(0).toUpperCase()}
-              </span>
+    <div className="space-y-0">
+      {/* Hero Header */}
+      <ProfileHeader user={user} isCurrentUser={isCurrentUser} />
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-12">
+        {isCurrentUser ? (
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto mb-6 md:mb-8 gap-1 md:gap-0">
+              <TabsTrigger value="profile" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+                Profile
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+                Settings
+              </TabsTrigger>
+              <TabsTrigger value="privacy" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+                Privacy
+              </TabsTrigger>
+              <TabsTrigger value="preferences" className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1.5">
+                Preferences
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="profile" className="space-y-6 md:space-y-8">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
+                {/* Left Column - Stats */}
+                <div className="xl:col-span-2 space-y-6 md:space-y-8 order-2 xl:order-1">
+                  <ProfileStats user={user} isCurrentUser={isCurrentUser} />
+                </div>
+
+                {/* Right Column - Actions */}
+                <div className="space-y-6 md:space-y-8 order-1 xl:order-2">
+                  <ProfileActions
+                    isCurrentUser={isCurrentUser}
+                    onSignOut={handleSignOut}
+                    onDeleteAccount={handleDeleteAccount}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-8">
+              <ProfileSettings user={user} isCurrentUser={isCurrentUser} />
+            </TabsContent>
+
+            <TabsContent value="privacy" className="space-y-8">
+              <ProfilePrivacy user={user} isCurrentUser={isCurrentUser} />
+            </TabsContent>
+
+            <TabsContent value="preferences" className="space-y-8">
+              <ProfilePreferences user={user} isCurrentUser={isCurrentUser} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
+            {/* Left Column - Stats */}
+            <div className="xl:col-span-2 space-y-6 md:space-y-8 order-2 xl:order-1">
+              <ProfileStats user={user} isCurrentUser={isCurrentUser} />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">{user.name}</h3>
-              <p className="text-muted-foreground">@{user.username}</p>
-              {isCurrentUser && (
-                <p className="text-muted-foreground text-sm">{user.email}</p>
-              )}
+
+            {/* Right Column - Actions */}
+            <div className="space-y-6 md:space-y-8 order-1 xl:order-2">
+              <ProfileActions
+                isCurrentUser={isCurrentUser}
+                onSignOut={handleSignOut}
+                onDeleteAccount={handleDeleteAccount}
+              />
             </div>
           </div>
-
-          {isCurrentUser ? (
-            <>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex justify-between">
-                  <span>Account Status:</span>
-                  <span
-                    className={
-                      user.emailVerified ? "text-green-600" : "text-yellow-600"
-                    }
-                  >
-                    {user.emailVerified ? "Verified" : "Pending Verification"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Member Since:</span>
-                  <span>{new Date(user.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-
-              {!user.emailVerified && (
-                <div className="pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => resendVerificationMutation.mutate()}
-                    disabled={resendVerificationMutation.isPending}
-                    className="w-full"
-                  >
-                    {resendVerificationMutation.isPending
-                      ? "Sending..."
-                      : "Resend Verification Email"}
-                  </Button>
-                </div>
-              )}
-
-              {editingUsername ? (
-                <div className="pt-2 space-y-2">
-                  <input
-                    type="text"
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
-                    className="w-full px-3 py-2 border rounded"
-                    placeholder="Enter new username"
-                  />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleUpdateUsername}>
-                      Save Username
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingUsername(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="pt-2">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setEditingUsername(true)}
-                  >
-                    Edit Username
-                  </Button>
-                </div>
-              )}
-
-              <div className="pt-4 space-y-2">
-                <Button className="w-full" onClick={() => router.push("/")}>
-                  Go to Dashboard
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => router.push("/auth/change-password")}
-                >
-                  Change Password
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleSignOut}
-                >
-                  Sign Out
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="pt-4 space-y-2 text-center">
-              <p className="text-sm text-muted-foreground">
-                Member since {new Date(user.createdAt).toLocaleDateString()}
-              </p>
-              <div className="pt-4">
-                <Button className="w-full" onClick={() => router.push("/auth/login")}>
-                  Login to View More
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </div>
   );
 }

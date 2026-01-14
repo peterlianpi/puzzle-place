@@ -60,7 +60,7 @@ const notifications = [
 export default function DashboardPage() {
   const { data: eventsData, isLoading: eventsLoading } = useGetEvents({ limit: 4 });
 
-  const upcomingEvents = eventsData?.events.slice(0, 4).map(event => ({
+  const upcomingEvents = eventsData?.events?.slice(0, 4).map(event => ({
     id: event.EventID,
     title: event.EventName,
     date: new Date(event.CreatedAt).toLocaleDateString(),
@@ -183,10 +183,10 @@ export default function DashboardPage() {
                           <div
                             className={`w-2 h-2 rounded-full ${
                               activity.type === "win"
-                                ? "bg-yellow-500"
+                                ? "bg-primary"
                                 : activity.type === "event"
-                                ? "bg-blue-500"
-                                : "bg-green-500"
+                                ? "bg-secondary"
+                                : "bg-accent"
                             }`}
                           />
                           <div className="flex-1">
@@ -283,7 +283,7 @@ export default function DashboardPage() {
                         transition={{ duration: 0.4, delay: 0.8 + index * 0.1 }}
                       >
                         {notification.unread && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2" />
                         )}
                         <div className="flex-1">
                           <p className="text-sm font-medium">

@@ -4,37 +4,43 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { usePerformance } from '@/hooks/use-performance';
 import { useVisibility } from '@/hooks/use-visibility';
-
-const testimonials = [
-  {
-    id: 1,
-    name: 'Sarah Johnson',
-    role: 'Puzzle Enthusiast',
-    content: 'Puzzle Place has transformed how I enjoy games. The community is amazing and the prizes are fantastic!',
-    avatar: 'https://picsum.photos/100/100?random=20',
-  },
-  {
-    id: 2,
-    name: 'Mike Chen',
-    role: 'Strategy Gamer',
-    content: 'I\'ve never seen a platform that brings together so many different game types. Highly recommended!',
-    avatar: 'https://picsum.photos/100/100?random=21',
-  },
-  {
-    id: 3,
-    name: 'Emily Davis',
-    role: 'Trivia Lover',
-    content: 'The events are well-organized and the interface is so user-friendly. I keep coming back for more!',
-    avatar: 'https://picsum.photos/100/100?random=22',
-  },
-];
+import { useGetTestimonials } from '@/features/testimonials/api/use-get-testimonials';
 
 export default function Testimonials() {
-  const { enableAnimations } = usePerformance();
+  const { enableAnimations, enableApiCalls } = usePerformance();
   const [ref, isVisible] = useVisibility();
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const { data, isLoading } = useGetTestimonials({ enabled: enableApiCalls });
+
+  const fallbackTestimonials = [
+    {
+      id: 1,
+      name: 'Sarah Johnson',
+      role: 'Puzzle Enthusiast',
+      content: 'Puzzle Place has transformed how I enjoy games. The community is amazing and the prizes are fantastic!',
+      avatar: 'https://picsum.photos/100/100?random=20',
+    },
+    {
+      id: 2,
+      name: 'Mike Chen',
+      role: 'Strategy Gamer',
+      content: 'I\'ve never seen a platform that brings together so many different game types. Highly recommended!',
+      avatar: 'https://picsum.photos/100/100?random=21',
+    },
+    {
+      id: 3,
+      name: 'Emily Davis',
+      role: 'Trivia Lover',
+      content: 'The events are well-organized and the interface is so user-friendly. I keep coming back for more!',
+      avatar: 'https://picsum.photos/100/100?random=22',
+    },
+  ];
+
+  const testimonials = data?.testimonials || fallbackTestimonials;
 
   useEffect(() => {
     if (isVisible) {
@@ -43,7 +49,7 @@ export default function Testimonials() {
       }, enableAnimations ? 5000 : 7000); // Slower for non-animated version
       return () => clearInterval(interval);
     }
-  }, [isVisible, enableAnimations]);
+  }, [isVisible, enableAnimations, testimonials.length]);
 
   if (!enableAnimations) {
     return (
@@ -57,19 +63,34 @@ export default function Testimonials() {
               <div className={`transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
                 <Card className="text-center">
                   <CardContent className="pt-6">
-                    <blockquote className="text-lg italic text-gray-700 dark:text-gray-300 mb-6">
-                      &quot;{testimonials[currentIndex].content}&quot;
-                    </blockquote>
-                    <div className="flex items-center justify-center space-x-4">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={testimonials[currentIndex].avatar} alt={testimonials[currentIndex].name} />
-                        <AvatarFallback>{testimonials[currentIndex].name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-white">{testimonials[currentIndex].name}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{testimonials[currentIndex].role}</p>
-                      </div>
-                    </div>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-4 w-full mb-6" />
+                        <div className="flex items-center justify-center space-x-4">
+                          <Skeleton className="w-12 h-12 rounded-full" />
+                          <div>
+                            <Skeleton className="h-4 w-24 mb-1" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <blockquote className="text-lg italic text-gray-700 dark:text-gray-300 mb-6">
+                          &quot;{testimonials[currentIndex].content}&quot;
+                        </blockquote>
+                        <div className="flex items-center justify-center space-x-4">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={testimonials[currentIndex].avatar || undefined} alt={testimonials[currentIndex].name} />
+                            <AvatarFallback>{testimonials[currentIndex].name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{testimonials[currentIndex].name}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{testimonials[currentIndex].role}</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -115,19 +136,34 @@ export default function Testimonials() {
               >
                 <Card className="text-center">
                   <CardContent className="pt-6">
-                    <blockquote className="text-lg italic text-gray-700 dark:text-gray-300 mb-6">
-                      &quot;{testimonials[currentIndex].content}&quot;
-                    </blockquote>
-                    <div className="flex items-center justify-center space-x-4">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={testimonials[currentIndex].avatar} alt={testimonials[currentIndex].name} />
-                        <AvatarFallback>{testimonials[currentIndex].name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-white">{testimonials[currentIndex].name}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{testimonials[currentIndex].role}</p>
-                      </div>
-                    </div>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-4 w-full mb-6" />
+                        <div className="flex items-center justify-center space-x-4">
+                          <Skeleton className="w-12 h-12 rounded-full" />
+                          <div>
+                            <Skeleton className="h-4 w-24 mb-1" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <blockquote className="text-lg italic text-gray-700 dark:text-gray-300 mb-6">
+                          &quot;{testimonials[currentIndex].content}&quot;
+                        </blockquote>
+                        <div className="flex items-center justify-center space-x-4">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={testimonials[currentIndex].avatar || undefined} alt={testimonials[currentIndex].name} />
+                            <AvatarFallback>{testimonials[currentIndex].name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{testimonials[currentIndex].name}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{testimonials[currentIndex].role}</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>

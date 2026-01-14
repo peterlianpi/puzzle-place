@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/auth";
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { handleApiError } from "@/lib/api-errors";
 
 const createGameEventSchema = z.object({
   eventName: z.string().min(1, "Event name is required"),
@@ -161,6 +162,7 @@ const app = new Hono()
       );
     }
   )
+
   .get(
     "/:id",
 
@@ -178,9 +180,9 @@ const app = new Hono()
       }
 
       const userId = session.user.id;
-      const { id: param } = c.req.valid("param"); // Extract account ID from URL params
-      const id = parseInt(param);
-      if (isNaN(id)) {
+      const { id } = c.req.valid("param");
+
+      if (!id) {
         return c.json({ error: "Invalid ID" }, 400);
       }
 
@@ -223,15 +225,17 @@ const app = new Hono()
       );
     }
   )
-  .patch("/:id", zValidator("json", updateGameEventSchema), async (c) => {
+
+  .patch("/:id", zValidator("param", z.object({ id: z.string() })), zValidator("json", updateGameEventSchema), async (c) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session?.user?.id) {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
     const userId = session.user.id;
-    const id = parseInt(c.req.param("id"));
-    if (isNaN(id)) {
+    const { id } = c.req.valid("param");
+
+    if (!id) {
       return c.json({ error: "Invalid ID" }, 400);
     }
 
@@ -298,9 +302,9 @@ const app = new Hono()
       }
 
       const userId = session.user.id;
-      const { id: param } = c.req.valid("param"); // Extract account ID from URL params
-      const id = parseInt(param);
-      if (isNaN(id)) {
+      const { id } = c.req.valid("param");
+
+      if (!id) {
         return c.json({ error: "Invalid ID" }, 400);
       }
 
@@ -316,6 +320,7 @@ const app = new Hono()
       });
       return c.json({ message: "Event deleted" });
     }
-  );
+  )
+  .onError((error, c) => handleApiError(c, error));
 
 export default app;

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -57,11 +56,11 @@ export default function TopUsers() {
   );
 
   const users = enableApiCalls
-    ? (usersData?.slice(0, 4).map((user, index) => ({
+    ? (Array.isArray(usersData) ? usersData.slice(0, 4).map((user, index) => ({
         ...user,
         rank: index + 1,
         bio: 'Active player and contributor to the community.',
-      })) || [])
+      })) : [])
     : staticUsers.map(user => ({
         ...user,
         image: imageQuality === 'low' ? `https://via.placeholder.com/100?text=${user.name.split(' ').map(n => n[0]).join('')}` : user.image,

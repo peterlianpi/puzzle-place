@@ -1,8 +1,10 @@
 "use client";
 
+import { lazy, Suspense } from "react";
 import { redirect } from "next/navigation";
-import CreateEventForm from "@/features/my-events/components/CreateEventForm";
 import { authClient } from "@/lib/auth/auth-client";
+
+const CreateEventForm = lazy(() => import("@/features/my-events/components/CreateEventForm"));
 
 export default function CreateEventPage() {
   const {
@@ -15,7 +17,7 @@ export default function CreateEventPage() {
   if (isPending) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -24,11 +26,11 @@ export default function CreateEventPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-red-600 text-lg">Authentication Error</p>
-          <p className="text-gray-600">{error.message || "Please try logging in again"}</p>
+          <p className="text-destructive text-lg">Authentication Error</p>
+          <p className="text-muted-foreground">{error.message || "Please try logging in again"}</p>
           <button
             onClick={() => refetch()}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
           >
             Retry
           </button>
@@ -42,9 +44,20 @@ export default function CreateEventPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Create New Game Event</h1>
-      <CreateEventForm mode="create" />
+    <div className="space-y-6 md:space-y-8">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Create New Game Event</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-2">
+            Set up your prize wheel event with custom prizes and values
+          </p>
+        </div>
+      <Suspense fallback={
+        <div className="flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <CreateEventForm mode="create" />
+      </Suspense>
     </div>
   );
 }
