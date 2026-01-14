@@ -1020,6 +1020,58 @@ const prizePool = [
   },
 ];
 
+const gameHistories = [
+  {
+    event_id: "2b4ae830-a20a-4f61-b991-3d510c2032a3",
+    player_user_id: "7f7c36d8-bbd5-4a61-9428-62477967011f",
+    won_prize_name: "iPhone 15 Pro Max",
+    won_prize_value: "1500",
+    played_at: "2026-01-10 10:00:00+00",
+  },
+  {
+    event_id: "2b4ae830-a20a-4f61-b991-3d510c2032a3",
+    player_user_id: "7f7c36d8-bbd5-4a61-9428-62477967011f",
+    won_prize_name: "Gold Ring (1 Gram)",
+    won_prize_value: "100",
+    played_at: "2026-01-10 11:00:00+00",
+  },
+  {
+    event_id: "2b4ae830-a20a-4f61-b991-3d510c2032a3",
+    player_user_id: "4d5e5ecb-bc7d-4e80-a191-bf713f77318b",
+    won_prize_name: "Cash $50",
+    won_prize_value: "50",
+    played_at: "2026-01-11 12:00:00+00",
+  },
+  {
+    event_id: "cf3cfc27-981b-4407-a9d6-fea3562e36c7",
+    player_user_id: "7f7c36d8-bbd5-4a61-9428-62477967011f",
+    won_prize_name: "ငွေသား ကျပ် သိန်း (၅၀)",
+    won_prize_value: "5000000",
+    played_at: "2026-01-12 13:00:00+00",
+  },
+  {
+    event_id: "cf3cfc27-981b-4407-a9d6-fea3562e36c7",
+    player_user_id: "f866896d-87e2-4705-bd66-dc7b834cebb8",
+    won_prize_name: "ငွေသား ကျပ် (၁၀) သိန်း",
+    won_prize_value: "1000000",
+    played_at: "2026-01-12 14:00:00+00",
+  },
+  {
+    event_id: "407b81e7-d770-4178-bea6-d4e91148dabd",
+    player_user_id: "4d5e5ecb-bc7d-4e80-a191-bf713f77318b",
+    won_prize_name: "အခေါက်ရွှေ (၁) ကျပ်သား",
+    won_prize_value: "6500000",
+    played_at: "2026-01-13 15:00:00+00",
+  },
+  {
+    event_id: "407b81e7-d770-4178-bea6-d4e91148dabd",
+    player_user_id: "80f7a52d-5ecb-4c1b-b0d4-7fd751b79939",
+    won_prize_name: "iPhone 15 Pro Max (Titanium)",
+    won_prize_value: "4800000",
+    played_at: "2026-01-13 16:00:00+00",
+  },
+];
+
 const testimonials = [
   {
     name: 'Sarah Johnson',
@@ -1170,6 +1222,31 @@ async function main() {
       }
     }
     log(`Seeded ${gameEvents.length} game events and ${totalPrizeCount} prize pools successfully.`);
+
+    // Seed game histories
+    log(`Seeding ${gameHistories.length} game histories...`);
+    for (const history of gameHistories) {
+      // Check if history already exists (simple check by event, player, played_at)
+      const existing = await prisma.gameHistory.findFirst({
+        where: {
+          EventID: history.event_id,
+          PlayerUserID: history.player_user_id,
+          PlayedAt: new Date(history.played_at),
+        },
+      });
+      if (!existing) {
+        await prisma.gameHistory.create({
+          data: {
+            EventID: history.event_id,
+            PlayerUserID: history.player_user_id,
+            WonPrizeName: history.won_prize_name,
+            WonPrizeValue: parseFloat(history.won_prize_value),
+            PlayedAt: new Date(history.played_at),
+          },
+        });
+      }
+    }
+    log(`Seeded game histories successfully.`);
 
     // Seed testimonials individually
     log(`Seeding ${testimonials.length} testimonials...`);

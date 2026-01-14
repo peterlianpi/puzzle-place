@@ -43,6 +43,7 @@ model User {
   // Game relations
   createdEvents GameEvent[]
   gameHistories GameHistory[]
+  games         Game[]
 
   @@index([username]) // Performance optimization for username lookups
   @@index([emailVerified]) // Performance for verified user queries
@@ -139,6 +140,7 @@ model GameEvent {
   // Relations
   prizePools    EventPrizePool[]
   gameHistories GameHistory[]
+  games         Game[]
 
   @@index([CreatorUserID])
   @@index([IsActive])
@@ -154,6 +156,9 @@ model EventPrizePool {
   PrizeValue   Decimal   @db.Decimal(18, 2)
   DisplayOrder Int?
   IsBlank      Boolean   @default(false)
+
+  // Relations
+  games Game[]
 
   @@index([EventID])
   @@map("Tbl_EventPrizePool")
@@ -172,6 +177,28 @@ model GameHistory {
   @@index([EventID])
   @@index([PlayerUserID])
   @@map("Tbl_GameHistory")
+}
+
+model Game {
+  GameID          String          @id @default(cuid())
+  EventID         String
+  event           GameEvent       @relation(fields: [EventID], references: [EventID])
+  PlayerUserID    String
+  player          User            @relation(fields: [PlayerUserID], references: [id])
+  CaseAssignments Json? // Array of {caseNumber: number, prizeId: string}
+  OpenedCases     Json? // Array of opened case numbers
+  IsFinished      Boolean         @default(false)
+  FinalPrizeID    String? // PrizeID of final prize
+  finalPrize      EventPrizePool? @relation(fields: [FinalPrizeID], references: [PrizeID])
+  BankerOffers    Json? // Array of offer objects {amount: number, accepted: boolean, atCaseCount: number}
+  StartedAt       DateTime        @default(now())
+  FinishedAt      DateTime?
+  WonAmount       Decimal?        @db.Decimal(18, 2) // For accepted offers or final prize value
+
+  @@index([EventID])
+  @@index([PlayerUserID])
+  @@index([IsFinished])
+  @@map("Tbl_Game")
 }
 
 model Testimonial {

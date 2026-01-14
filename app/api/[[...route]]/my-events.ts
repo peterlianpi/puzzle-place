@@ -117,6 +117,7 @@ const app = new Hono()
           prizePools: {
             select: {
               PrizeID: true,
+              EventID: true,
               PrizeName: true,
               PrizeValue: true,
               DisplayOrder: true,
@@ -192,6 +193,7 @@ const app = new Hono()
           prizePools: {
             select: {
               PrizeID: true,
+              EventID: true,
               PrizeName: true,
               PrizeValue: true,
               DisplayOrder: true,

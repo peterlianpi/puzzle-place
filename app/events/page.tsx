@@ -5,13 +5,31 @@ import EventList from "@/features/events/components/EventList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Trophy } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Navbar } from "@/components/Navbar";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
 
 export default function PublicEventsPage() {
-  const { data, isLoading, error, refetch } = useGetEvents({ limit: 20, offset: 0 });
+  const { data, isLoading, error, refetch } = useGetEvents({
+    limit: 20,
+    offset: 0,
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
@@ -42,6 +60,7 @@ export default function PublicEventsPage() {
     console.log("Events fetch error", error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <Alert variant="destructive" className="max-w-2xl mx-auto">
             <AlertCircle className="h-4 w-4" />
@@ -65,12 +84,14 @@ export default function PublicEventsPage() {
   if (!data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <Alert className="max-w-2xl mx-auto">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>No data available</AlertTitle>
             <AlertDescription>
-              Unable to load events data. Please check your connection and try again.
+              Unable to load events data. Please check your connection and try
+              again.
             </AlertDescription>
           </Alert>
         </div>
@@ -81,12 +102,14 @@ export default function PublicEventsPage() {
   if ("error" in data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <Alert variant="destructive" className="max-w-2xl mx-auto">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error: {String(data.error)}</AlertTitle>
             <AlertDescription>
-              An error occurred while loading events. Please try refreshing the page.
+              An error occurred while loading events. Please try refreshing the
+              page.
             </AlertDescription>
           </Alert>
         </div>
@@ -94,23 +117,63 @@ export default function PublicEventsPage() {
     );
   }
 
-  const events = data.events || [];
+  const events = data && 'events' in data ? data.events || [] : [];
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch =
+      event.EventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.Description &&
+        event.Description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && event.IsActive) ||
+      (statusFilter === "inactive" && !event.IsActive);
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <Trophy className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Discover Events</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Discover Events
+            </h1>
           </div>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Join exciting puzzle events and compete for amazing prizes. Explore events created by the community.
+            Join exciting puzzle events and compete for amazing prizes. Explore
+            events created by the community.
           </p>
         </div>
+
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <Input
+            placeholder="Search events..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
+          />
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              if (value) setStatusFilter(value as "all" | "active" | "inactive");
+            }}
+          >
+            <SelectTrigger className="max-w-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Events</SelectItem>
+              <SelectItem value="active">Active Only</SelectItem>
+              <SelectItem value="inactive">Inactive Only</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <EventList
           title="Events"
-          events={events}
+          events={filteredEvents}
           baseUrl="/events"
           isLoading={isLoading}
         />
