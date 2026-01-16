@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/prisma";
-import { auth } from "@/lib/auth/auth";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import z from "zod";

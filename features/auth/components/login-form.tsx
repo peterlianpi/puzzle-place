@@ -87,6 +87,10 @@ export function LoginForm({
         onError: (ctx) => {
           setError(ctx.error.message || "Login failed. Please try again.");
         },
+        onSuccess: () => {
+          // Manually handle redirect since callbackURL might not work as expected
+          window.location.href = safeRedirectUrl;
+        },
       }
     );
   }

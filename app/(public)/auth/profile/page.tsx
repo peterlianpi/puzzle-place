@@ -25,8 +25,8 @@ export default function ProfileRedirectPage() {
     } else if (user.username) {
       router.replace(`/@${user.username}`);
     } else {
-      // Username not set, stay on profile (could allow setting here)
-      router.replace("/auth/profile");
+      // Username not set, redirect to dashboard
+      router.replace("/dashboard");
     }
   }, [userData, isLoading, error, router]);
 

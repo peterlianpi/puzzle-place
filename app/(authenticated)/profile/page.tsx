@@ -44,8 +44,7 @@ export default function ProfilePage() {
 
   if (sessionLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="mb-8">
               <Skeleton className="h-10 w-48 mb-2" />
@@ -54,14 +53,13 @@ export default function ProfilePage() {
             <Skeleton className="h-96 w-full rounded-lg" />
           </div>
         </div>
-      </div>
+  
     );
   }
 
   if (sessionError || !session?.user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -75,7 +73,6 @@ export default function ProfilePage() {
             </Alert>
           </div>
         </div>
-      </div>
     );
   }
 
@@ -104,8 +101,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -222,7 +218,6 @@ export default function ProfilePage() {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
     </div>
   );
 }

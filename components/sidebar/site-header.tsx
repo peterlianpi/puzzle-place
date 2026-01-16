@@ -54,7 +54,7 @@ export function MenuButton({
       }}
       aria-label="Toggle navigation menu"
       {...props}
-asChild    >
+    >
       {!isMobile && open ? <X size={24} /> : <MenuIcon size={24} />}
     </Button>
   );

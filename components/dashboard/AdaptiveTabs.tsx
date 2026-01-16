@@ -19,43 +19,49 @@ interface AdaptiveTabsProps {
 export function AdaptiveTabs({ tabs, defaultValue, className }: AdaptiveTabsProps) {
   const [tabOrder, setTabOrder] = useState(tabs.map(tab => tab.id));
   const [activeTab, setActiveTab] = useState(defaultValue || tabs[0]?.id);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Load tab usage from localStorage
   useEffect(() => {
-    const storedUsage: Record<string, number> = {};
-    tabs.forEach(tab => {
-      const usage = localStorage.getItem(`tab-${tab.id}-usage`);
-      storedUsage[tab.id] = usage ? parseInt(usage, 10) : 0;
-    });
+    setIsMounted(true);
+    if (typeof window !== 'undefined') {
+      const storedUsage: Record<string, number> = {};
+      tabs.forEach(tab => {
+        const usage = localStorage.getItem(`tab-${tab.id}-usage`);
+        storedUsage[tab.id] = usage ? parseInt(usage, 10) : 0;
+      });
 
-    // Sort tabs by usage (most used first)
-    const sortedOrder = tabs
-      .map(tab => tab.id)
-      .sort((a, b) => (storedUsage[b] || 0) - (storedUsage[a] || 0));
+      // Sort tabs by usage (most used first)
+      const sortedOrder = tabs
+        .map(tab => tab.id)
+        .sort((a, b) => (storedUsage[b] || 0) - (storedUsage[a] || 0));
 
-    setTabOrder(sortedOrder);
+      setTabOrder(sortedOrder);
+    }
   }, [tabs]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
 
-    // Update usage count
-    const currentUsage = localStorage.getItem(`tab-${value}-usage`);
-    const newUsage = (currentUsage ? parseInt(currentUsage, 10) : 0) + 1;
-    localStorage.setItem(`tab-${value}-usage`, newUsage.toString());
+    if (typeof window !== 'undefined') {
+      // Update usage count
+      const currentUsage = localStorage.getItem(`tab-${value}-usage`);
+      const newUsage = (currentUsage ? parseInt(currentUsage, 10) : 0) + 1;
+      localStorage.setItem(`tab-${value}-usage`, newUsage.toString());
 
-    // Re-sort if needed
-    const updatedUsage: Record<string, number> = {};
-    tabs.forEach(tab => {
-      const usage = localStorage.getItem(`tab-${tab.id}-usage`);
-      updatedUsage[tab.id] = usage ? parseInt(usage, 10) : 0;
-    });
+      // Re-sort if needed
+      const updatedUsage: Record<string, number> = {};
+      tabs.forEach(tab => {
+        const usage = localStorage.getItem(`tab-${tab.id}-usage`);
+        updatedUsage[tab.id] = usage ? parseInt(usage, 10) : 0;
+      });
 
-    const newOrder = tabs
-      .map(tab => tab.id)
-      .sort((a, b) => (updatedUsage[b] || 0) - (updatedUsage[a] || 0));
+      const newOrder = tabs
+        .map(tab => tab.id)
+        .sort((a, b) => (updatedUsage[b] || 0) - (updatedUsage[a] || 0));
 
-    setTabOrder(newOrder);
+      setTabOrder(newOrder);
+    }
   };
 
   const orderedTabs = tabOrder.map(id => tabs.find(tab => tab.id === id)!);
@@ -73,7 +79,8 @@ export function AdaptiveTabs({ tabs, defaultValue, className }: AdaptiveTabsProp
             <TabsTrigger value={tab.id} className="relative">
               {tab.label}
               {/* Show usage indicator for frequently used tabs */}
-              {localStorage.getItem(`tab-${tab.id}-usage`) &&
+              {isMounted && typeof window !== 'undefined' &&
+               localStorage.getItem(`tab-${tab.id}-usage`) &&
                parseInt(localStorage.getItem(`tab-${tab.id}-usage`)!) > 3 && (
                 <motion.div
                   className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"

@@ -166,9 +166,17 @@ export function SignupForm({
           try {
             await setUsernameMutation.mutateAsync({ username: data.username });
             toast.success("Account created successfully!");
+            // Manual redirect after successful signup
+            setTimeout(() => {
+              window.location.href = safeRedirectUrl;
+            }, 2000); // Give time for the toast to show
           } catch (error) {
             console.error("Set username error:", error);
             toast.error("Account created but username setup failed");
+            // Still redirect after error
+            setTimeout(() => {
+              window.location.href = safeRedirectUrl;
+            }, 2000);
           }
         },
       }

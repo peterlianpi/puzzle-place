@@ -99,9 +99,8 @@ export function Navbar() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className={`text-sm font-medium transition-colors flex items-center gap-2 ${
-                        isActive(item.href) ? "text-primary" : "hover:text-primary"
-                      }`}
+                      className={`text-sm font-medium transition-colors flex items-center gap-2 ${isActive(item.href) ? "text-primary" : "hover:text-primary"
+                        }`}
                     >
                       {item.icon && <item.icon className="h-4 w-4" />}
                       {item.label}
@@ -129,9 +128,8 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-colors flex items-center gap-2 ${
-                  isActive(item.href) ? "text-primary" : "hover:text-primary"
-                }`}
+                className={`text-sm font-medium transition-colors flex items-center gap-2 ${isActive(item.href) ? "text-primary" : "hover:text-primary"
+                  }`}
               >
                 {item.icon && <item.icon className="h-4 w-4" />}
                 {item.label}
@@ -218,25 +216,14 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden absolute top-16 left-0 right-0 bg-background border-b shadow-lg">
-          <div className="flex justify-end p-2 border-b">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close menu"
-              className="rounded-full h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+
           <nav className="flex flex-col px-4 pb-4 space-y-2">
             {mobileItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-colors py-2 ${
-                  isActive(item.href) ? "text-primary" : "hover:text-primary"
-                }`}
+                className={`text-sm font-medium transition-colors py-2 ${isActive(item.href) ? "text-primary" : "hover:text-primary"
+                  }`}
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}
