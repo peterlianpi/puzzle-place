@@ -9,6 +9,8 @@ import authUser from "./auth-user";
 import avatar from "./avatar";
 import testimonials from "./testimonials";
 import profile from "./profile";
+import gameplay from "./gameplay";
+import leaderboard from "./leaderboard";
 
 const app = new Hono().basePath("/api");
 
@@ -35,7 +37,9 @@ const routes = app
   .route("/auth-user", authUser)
   .route("/avatar", avatar)
   .route("/testimonials", testimonials)
-  .route("/profile", profile);
+  .route("/profile", profile)
+  .route("/gameplay", gameplay)
+  .route("/leaderboard", leaderboard);
 
 export const GET = handle(app);
 export const POST = handle(app);

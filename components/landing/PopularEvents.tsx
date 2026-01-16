@@ -64,18 +64,18 @@ const staticEvents = [
 export default function PopularEvents() {
   const { enableApiCalls } = usePerformance();
 
-  const { data: eventsData, isLoading } = useGetEvents(
+  const { allEvents, isLoading } = useGetEvents(
     enableApiCalls ? { limit: 4 } : { enabled: false }
   );
 
   const events = enableApiCalls
-    ? eventsData?.events?.slice(0, 4).map((event: EventData) => ({
+    ? allEvents.slice(0, 4).map((event) => ({
         id: event.EventID,
         title: event.EventName,
         description: event.Description || "Exciting game event!",
         date: new Date(event.CreatedAt).toLocaleDateString(),
         location: "Online",
-      })) || []
+      }))
     : staticEvents;
 
   const containerVariants = {

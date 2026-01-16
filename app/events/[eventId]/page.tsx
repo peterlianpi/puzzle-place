@@ -9,34 +9,29 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import { useGetEvent } from "@/features/events/api/use-get-event";
 import { useAuthStatus } from "@/features/auth/api/use-auth-status";
-import LoginPromptBanner from "@/features/auth/components/login-prompt-banner";
-import { useState } from "react";
-import { authClient } from "@/lib/auth/auth-client";
-import { ArrowLeft, Trophy, Calendar, Users, Play, AlertCircle, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Trophy,
+  Calendar,
+  Users,
+  Play,
+  AlertCircle,
+  Sparkles,
+  LogIn,
+} from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import { ClientLogger } from "@/lib/client-logger";
 
-export default function PublicEventPage() {
+export default function EventDetailsPage() {
   const params = useParams();
-  const id = params.id as string;
-  const {
-    data: session,
-    isPending,
-  } = authClient.useSession();
-  const [showLoginOverlay, setShowLoginOverlay] = useState(false);
-  const isAuthenticated = !!session?.user;
+  const id = params.eventId as string;
   const { data, isLoading, error, refetch } = useGetEvent(id);
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 
-  const handleJoinEvent = () => {
-    if (!isAuthenticated) {
-      setShowLoginOverlay(true);
-    } else {
-      // TODO: Implement join event logic
-      alert("Joining event... (not implemented yet)");
-    }
-  };
-
-  if (isLoading || isPending) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="mb-6">
@@ -71,6 +66,7 @@ export default function PublicEventPage() {
   if (error || !data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Alert variant="destructive">
@@ -104,13 +100,15 @@ export default function PublicEventPage() {
   if ("error" in data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error: {data.error}</AlertTitle>
               <AlertDescription>
-                An error occurred while loading events. Please try refreshing the page.
+                An error occurred while loading events. Please try refreshing
+                the page.
               </AlertDescription>
             </Alert>
             <div className="mt-6 text-center">
@@ -127,15 +125,48 @@ export default function PublicEventPage() {
     );
   }
 
-  const event = data.event;
+  // API now returns event directly
+  const event = data && !('error' in data) ? data : null;
+
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Event not found</AlertTitle>
+              <AlertDescription>
+                The requested event could not be found.
+              </AlertDescription>
+            </Alert>
+            <div className="mt-6 text-center">
+              <Link href="/events">
+                <Button>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Events
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <Link href="/events">
-              <Button variant="outline" className="mb-6 group" aria-label="Back to events">
+              <Button
+                variant="outline"
+                className="mb-6 group"
+                aria-label="Back to events"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
                 Back to Events
               </Button>
@@ -145,14 +176,17 @@ export default function PublicEventPage() {
                 <Trophy className="h-8 w-8 text-primary" />
               </div>
               <div className="flex-1">
-                <h1 className="text-4xl font-bold text-foreground mb-2">{event.EventName}</h1>
+                <h1 className="text-4xl font-bold text-foreground mb-2">
+                  {event.EventName}
+                </h1>
                 <p className="text-muted-foreground text-lg leading-relaxed">
                   {event.Description || "No description available"}
                 </p>
                 <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    Created {new Date(event.CreatedAt).toLocaleDateString("en-US", {
+                    Created{" "}
+                    {new Date(event.CreatedAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
@@ -167,25 +201,35 @@ export default function PublicEventPage() {
             </div>
           </div>
 
-          {!isAuthenticated && (
-            <div className="mb-6">
-              <LoginPromptBanner
-                message="Sign up to join events and win prizes!"
-                redirect={window.location.pathname}
-              />
-            </div>
-          )}
-
           <div className="mb-8">
-            <Button
-              onClick={handleJoinEvent}
-              size="lg"
-              className="shadow-lg hover:shadow-xl transition-all duration-200"
-              aria-label="Join this event"
-            >
-              <Play className="h-5 w-5 mr-2" />
-              Join Event
-            </Button>
+            {isAuthenticated ? (
+              <Link href={`/play/${id}`}>
+                <Button
+                  size="lg"
+                  className="shadow-lg hover:shadow-xl transition-all duration-200"
+                  aria-label="Start the game"
+                >
+                  <Play className="h-5 w-5 mr-2" />
+                  Start Game
+                </Button>
+              </Link>
+            ) : (
+              <div className="text-center">
+                <div className="bg-muted/50 rounded-lg p-6 mb-4">
+                  <LogIn className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Login Required</h3>
+                  <p className="text-muted-foreground mb-4">
+                    You need to be logged in to play this game and compete for prizes.
+                  </p>
+                  <Link href={`/auth/login?redirect=/play/${id}`}>
+                    <Button size="lg" className="shadow-lg hover:shadow-xl transition-all duration-200">
+                      <LogIn className="h-5 w-5 mr-2" />
+                      Login to Play
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
 
           <Card className="shadow-lg border-0 bg-card/50 backdrop-blur-sm">
@@ -200,34 +244,36 @@ export default function PublicEventPage() {
                 {event.prizePools
                   .sort((a, b) => (a.DisplayOrder || 0) - (b.DisplayOrder || 0))
                   .map((prize, index) => (
-                  <div
-                    key={prize.PrizeID}
-                    className="border rounded-xl p-6 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-card to-muted/20"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                          {index + 1}
-                        </span>
-                        <h3 className="font-semibold text-foreground">{prize.PrizeName}</h3>
+                    <div
+                      key={prize.PrizeID}
+                      className="border rounded-xl p-6 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-card to-muted/20"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                            {index + 1}
+                          </span>
+                          <h3 className="font-semibold text-foreground">
+                            {prize.PrizeName}
+                          </h3>
+                        </div>
+                        <Badge
+                          variant={prize.IsBlank ? "secondary" : "default"}
+                          className="ml-2"
+                        >
+                          {prize.IsBlank ? "Blank" : "Prize"}
+                        </Badge>
                       </div>
-                      <Badge
-                        variant={prize.IsBlank ? "secondary" : "default"}
-                        className="ml-2"
-                      >
-                        {prize.IsBlank ? "Blank" : "Prize"}
-                      </Badge>
-                    </div>
-                    {!prize.IsBlank && (
-                      <p className="text-2xl font-bold text-primary mb-2">
-                        ${parseFloat(prize.PrizeValue || '0').toFixed(2)}
+                      {!prize.IsBlank && (
+                        <p className="text-2xl font-bold text-primary mb-2">
+                          ${parseFloat(String(prize.PrizeValue)).toFixed(2)}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Display Order: {prize.DisplayOrder || "N/A"}
                       </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Display Order: {prize.DisplayOrder || 'N/A'}
-                    </p>
-                  </div>
-                ))}
+                    </div>
+                  ))}
               </div>
               {event.prizePools.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
@@ -237,15 +283,6 @@ export default function PublicEventPage() {
               )}
             </CardContent>
           </Card>
-
-          {showLoginOverlay && (
-            <LoginPromptBanner
-              title="Join Event"
-              message="You need to be logged in to join this event and participate."
-              action="Login to Join"
-              redirect={window.location.pathname}
-            />
-          )}
         </div>
       </div>
     </div>

@@ -45,7 +45,7 @@ interface GameEventFormProps {
   event?: {
     eventId: string;
     eventName: string;
-    description?: string;
+    description?: string | null;
     prizes: { name: string; value: number; isBlank: boolean; }[];
   };
 }

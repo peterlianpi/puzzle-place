@@ -8,6 +8,7 @@ import {
   LifeBuoy,
   LogIn,
   Send,
+  Trophy,
   // Settings2,
   User,
   UserPlus,
@@ -54,24 +55,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: Home,
         },
         {
-          title: "Browse Events",
+          title: "Events",
           url: "/events",
           icon: Gamepad2,
         },
         {
-          title: "My Events",
-          url: "/my-events",
+          title: "Create Event",
+          url: "/events/create",
           icon: Gamepad2,
-          items: [
-            {
-              title: "Create Event",
-              url: "/my-events/create-event",
-            },
-            {
-              title: "Manage Events",
-              url: "/my-events",
-            },
-          ],
+        },
+        {
+          title: "Leaderboard",
+          url: "/leaderboard",
+          icon: Trophy,
         },
         {
           title: "Dashboard",
@@ -91,9 +87,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: Home,
         },
         {
-          title: "Browse Events",
+          title: "Events",
           url: "/events",
           icon: Gamepad2,
+        },
+        {
+          title: "Leaderboard",
+          url: "/leaderboard",
+          icon: Trophy,
         },
       ];
 
