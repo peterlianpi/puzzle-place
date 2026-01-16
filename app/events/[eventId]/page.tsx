@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import { useGetEvent } from "@/features/events/api/use-get-event";
+import { useAuthStatus } from "@/features/auth/api/use-auth-status";
 import {
   ArrowLeft,
   Trophy,
@@ -16,18 +17,21 @@ import {
   Play,
   AlertCircle,
   Sparkles,
+  LogIn,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { ClientLogger } from "@/lib/client-logger";
 
 export default function EventDetailsPage() {
   const params = useParams();
-  const id = params.id as string;
+  const id = params.eventId as string;
   const { data, isLoading, error, refetch } = useGetEvent(id);
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <PublicNavbar />
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="mb-6">
@@ -62,7 +66,7 @@ export default function EventDetailsPage() {
   if (error || !data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <PublicNavbar />
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Alert variant="destructive">
@@ -96,7 +100,7 @@ export default function EventDetailsPage() {
   if ("error" in data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <PublicNavbar />
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Alert variant="destructive">
@@ -121,12 +125,13 @@ export default function EventDetailsPage() {
     );
   }
 
-  const event = data && 'event' in data ? data.event : null;
+  // API now returns event directly
+  const event = data && !('error' in data) ? data : null;
 
   if (!event) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <PublicNavbar />
+        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Alert variant="destructive">
@@ -152,7 +157,7 @@ export default function EventDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <PublicNavbar />
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
@@ -197,16 +202,34 @@ export default function EventDetailsPage() {
           </div>
 
           <div className="mb-8">
-            <Link href={`/play/${id}`}>
-              <Button
-                size="lg"
-                className="shadow-lg hover:shadow-xl transition-all duration-200"
-                aria-label="Start the game"
-              >
-                <Play className="h-5 w-5 mr-2" />
-                Start Game
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link href={`/play/${id}`}>
+                <Button
+                  size="lg"
+                  className="shadow-lg hover:shadow-xl transition-all duration-200"
+                  aria-label="Start the game"
+                >
+                  <Play className="h-5 w-5 mr-2" />
+                  Start Game
+                </Button>
+              </Link>
+            ) : (
+              <div className="text-center">
+                <div className="bg-muted/50 rounded-lg p-6 mb-4">
+                  <LogIn className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Login Required</h3>
+                  <p className="text-muted-foreground mb-4">
+                    You need to be logged in to play this game and compete for prizes.
+                  </p>
+                  <Link href={`/auth/login?redirect=/play/${id}`}>
+                    <Button size="lg" className="shadow-lg hover:shadow-xl transition-all duration-200">
+                      <LogIn className="h-5 w-5 mr-2" />
+                      Login to Play
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
 
           <Card className="shadow-lg border-0 bg-card/50 backdrop-blur-sm">

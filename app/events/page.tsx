@@ -14,19 +14,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useInView } from "react-intersection-observer";
 
 export default function PublicEventsPage() {
-  const { data, isLoading, error, refetch } = useGetEvents({
+  const {
+    allEvents,
+    totalCount,
+    isLoading,
+    isFetchingNextPage,
+    error,
+    fetchNextPage,
+    hasNextPage
+  } = useGetEvents({
     limit: 20,
-    offset: 0,
   });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >("all");
 
-  if (isLoading && !data) {
+  // Intersection observer for infinite scroll
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: "100px",
+  });
+
+  // Load more when the sentinel element comes into view
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  if (isLoading && allEvents.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Navbar />
@@ -57,7 +79,6 @@ export default function PublicEventsPage() {
   }
 
   if (error) {
-    console.log("Events fetch error", error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Navbar />
@@ -66,14 +87,7 @@ export default function PublicEventsPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error loading events</AlertTitle>
             <AlertDescription className="mt-2">
-              {error?.message || "Please try again later"}
-              <button
-                onClick={() => refetch()}
-                className="ml-2 underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
-                aria-label="Retry loading events"
-              >
-                Retry
-              </button>
+              {error && typeof error === 'object' && 'message' in error ? (error as Error).message : "Please try again later"}
             </AlertDescription>
           </Alert>
         </div>
@@ -81,44 +95,7 @@ export default function PublicEventsPage() {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <Alert className="max-w-2xl mx-auto">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>No data available</AlertTitle>
-            <AlertDescription>
-              Unable to load events data. Please check your connection and try
-              again.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    );
-  }
-
-  if ("error" in data) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <Alert variant="destructive" className="max-w-2xl mx-auto">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error: {String(data.error)}</AlertTitle>
-            <AlertDescription>
-              An error occurred while loading events. Please try refreshing the
-              page.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    );
-  }
-
-  const events = data && 'events' in data ? data.events || [] : [];
-  const filteredEvents = events.filter((event) => {
+  const filteredEvents = allEvents.filter((event) => {
     const matchesSearch =
       event.EventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (event.Description &&
@@ -171,12 +148,45 @@ export default function PublicEventsPage() {
           </Select>
         </div>
 
-        <EventList
-          title="Events"
-          events={filteredEvents}
-          baseUrl="/events"
-          isLoading={isLoading}
-        />
+        <div className="space-y-6">
+          <EventList
+            title="Events"
+            events={filteredEvents}
+            baseUrl="/events"
+            isLoading={isLoading}
+          />
+
+          {/* Infinite scroll sentinel */}
+          {hasNextPage && (
+            <div
+              ref={ref}
+              className="flex justify-center items-center py-8"
+            >
+              {isFetchingNextPage ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  Loading more events...
+                </div>
+              ) : (
+                <div className="text-muted-foreground text-sm">
+                  Scroll down to load more events
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* End of results indicator */}
+          {!hasNextPage && allEvents.length > 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">
+                Showing {filteredEvents.length} of {totalCount} events
+              </p>
+              {!hasNextPage && totalCount > 20 && (
+                <p className="text-xs mt-1">You've reached the end!</p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

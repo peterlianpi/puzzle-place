@@ -19,6 +19,39 @@ const log = (message: string, level: 'info' | 'warn' | 'error' = 'info') => {
   process.stdout.write(`${timestamp} ${prefix} ${message}\n`);
 };
 
+// Retry utility for database operations
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  maxRetries = 3,
+  delay = 1000
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Check if it's a network/TLS error that we should retry
+      const isRetryableError = errorMessage.includes('TLS') ||
+                              errorMessage.includes('ECONNREFUSED') ||
+                              errorMessage.includes('ENOTFOUND') ||
+                              errorMessage.includes('network socket disconnected') ||
+                              errorMessage.includes('connection reset');
+
+      if (!isRetryableError || attempt === maxRetries) {
+        log(`${operationName} failed after ${attempt} attempts: ${errorMessage}`, 'error');
+        throw error;
+      }
+
+      log(`${operationName} failed (attempt ${attempt}/${maxRetries}): ${errorMessage}. Retrying in ${delay}ms...`, 'warn');
+      await new Promise(resolve => setTimeout(resolve, delay));
+      delay *= 2; // Exponential backoff
+    }
+  }
+  throw new Error(`Unexpected error in retryOperation`);
+}
+
 // Database connection check with retry logic
 async function checkDatabaseConnection(retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -1121,22 +1154,28 @@ async function main() {
     // Seed users
     log(`Seeding ${users.length} users...`);
     for (const user of users) {
-      await prisma.user.upsert({
-        where: { id: user.id },
-        update: user,
-        create: user,
-      });
+      await retryOperation(
+        () => prisma.user.upsert({
+          where: { id: user.id },
+          update: user,
+          create: user,
+        }),
+        `User upsert for ${user.username}`
+      );
     }
     log(`Seeded users successfully.`);
 
     // Seed accounts
     log(`Seeding ${accounts.length} accounts...`);
     for (const account of accounts) {
-      await prisma.account.upsert({
-        where: { providerId_accountId: { providerId: account.providerId, accountId: account.accountId } },
-        update: account,
-        create: account,
-      });
+      await retryOperation(
+        () => prisma.account.upsert({
+          where: { providerId_accountId: { providerId: account.providerId, accountId: account.accountId } },
+          update: account,
+          create: account,
+        }),
+        `Account upsert for ${account.accountId}`
+      );
     }
     log(`Seeded accounts successfully.`);
 
@@ -1170,6 +1209,16 @@ async function main() {
       throw new Error(`Data integrity violation: Prizes reference non-existent events: ${invalidPrizes.map(p => p.id).join(', ')}`);
     }
 
+    // Ensure all existing events are active
+    log('Ensuring all events are active...');
+    await retryOperation(
+      () => prisma.gameEvent.updateMany({
+        where: {},
+        data: { IsActive: true },
+      }),
+      'Update existing events to active'
+    );
+
     // Seed game events and their prizes in groups for atomicity
     log(`Seeding ${gameEvents.length} game events and their prizes...`);
     let totalPrizeCount = 0;
@@ -1177,45 +1226,50 @@ async function main() {
       const event = gameEvents[i];
       const eventPrizes = prizePool.filter(p => p.event_id === event.id);
 
-      await prisma.$transaction(async (tx) => {
-        // Upsert the event
-        await tx.gameEvent.upsert({
-          where: { EventID: event.id },
-          update: {
-            CreatorUserID: event.creator_id,
-            EventName: event.event_name,
-            Description: event.description,
-            CreatedAt: new Date(event.created_at),
-          },
-          create: {
-            EventID: event.id,
-            CreatorUserID: event.creator_id,
-            EventName: event.event_name,
-            Description: event.description,
-            CreatedAt: new Date(event.created_at),
-          },
-        });
-
-        // Seed prizes for this event
-        for (const prize of eventPrizes) {
-          const existing = await tx.eventPrizePool.findUnique({
-            where: { PrizeID: prize.id },
+      await retryOperation(
+        () => prisma.$transaction(async (tx) => {
+          // Upsert the event
+          await tx.gameEvent.upsert({
+            where: { EventID: event.id },
+            update: {
+              CreatorUserID: event.creator_id,
+              EventName: event.event_name,
+              Description: event.description,
+              IsActive: true,
+              CreatedAt: new Date(event.created_at),
+            },
+            create: {
+              EventID: event.id,
+              CreatorUserID: event.creator_id,
+              EventName: event.event_name,
+              Description: event.description,
+              IsActive: true,
+              CreatedAt: new Date(event.created_at),
+            },
           });
-          if (!existing) {
-            await tx.eventPrizePool.create({
-              data: {
-                PrizeID: prize.id,
-                EventID: prize.event_id,
-                PrizeName: prize.name,
-                PrizeValue: parseFloat(prize.value),
-                DisplayOrder: prize.sort_order,
-                IsBlank: prize.is_blank,
-              },
+
+          // Seed prizes for this event
+          for (const prize of eventPrizes) {
+            const existing = await tx.eventPrizePool.findUnique({
+              where: { PrizeID: prize.id },
             });
-            totalPrizeCount++;
+            if (!existing) {
+              await tx.eventPrizePool.create({
+                data: {
+                  PrizeID: prize.id,
+                  EventID: prize.event_id,
+                  PrizeName: prize.name,
+                  PrizeValue: parseFloat(prize.value),
+                  DisplayOrder: prize.sort_order,
+                  IsBlank: prize.is_blank,
+                },
+              });
+              totalPrizeCount++;
+            }
           }
-        }
-      });
+        }),
+        `Event transaction for ${event.event_name}`
+      );
 
       if ((i + 1) % 5 === 0 || i === gameEvents.length - 1) {
         log(`Seeded ${i + 1}/${gameEvents.length} events and ${totalPrizeCount} prizes so far`);
@@ -1226,25 +1280,30 @@ async function main() {
     // Seed game histories
     log(`Seeding ${gameHistories.length} game histories...`);
     for (const history of gameHistories) {
-      // Check if history already exists (simple check by event, player, played_at)
-      const existing = await prisma.gameHistory.findFirst({
-        where: {
-          EventID: history.event_id,
-          PlayerUserID: history.player_user_id,
-          PlayedAt: new Date(history.played_at),
+      await retryOperation(
+        async () => {
+          // Check if history already exists (simple check by event, player, played_at)
+          const existing = await prisma.gameHistory.findFirst({
+            where: {
+              EventID: history.event_id,
+              PlayerUserID: history.player_user_id,
+              PlayedAt: new Date(history.played_at),
+            },
+          });
+          if (!existing) {
+            await prisma.gameHistory.create({
+              data: {
+                EventID: history.event_id,
+                PlayerUserID: history.player_user_id,
+                WonPrizeName: history.won_prize_name,
+                WonPrizeValue: parseFloat(history.won_prize_value),
+                PlayedAt: new Date(history.played_at),
+              },
+            });
+          }
         },
-      });
-      if (!existing) {
-        await prisma.gameHistory.create({
-          data: {
-            EventID: history.event_id,
-            PlayerUserID: history.player_user_id,
-            WonPrizeName: history.won_prize_name,
-            WonPrizeValue: parseFloat(history.won_prize_value),
-            PlayedAt: new Date(history.played_at),
-          },
-        });
-      }
+        `Game history for ${history.event_id}`
+      );
     }
     log(`Seeded game histories successfully.`);
 
@@ -1252,25 +1311,30 @@ async function main() {
     log(`Seeding ${testimonials.length} testimonials...`);
     for (let i = 0; i < testimonials.length; i++) {
       const testimonial = testimonials[i];
-      const existing = await prisma.testimonial.findFirst({
-        where: {
-          name: testimonial.name,
-          role: testimonial.role,
+      await retryOperation(
+        async () => {
+          const existing = await prisma.testimonial.findFirst({
+            where: {
+              name: testimonial.name,
+              role: testimonial.role,
+            },
+          });
+          if (!existing) {
+            await prisma.testimonial.create({
+              data: {
+                name: testimonial.name,
+                role: testimonial.role,
+                content: testimonial.content,
+                avatar: testimonial.avatar,
+              },
+            });
+            log(`Seeded testimonial: ${testimonial.name}`);
+          } else {
+            log(`Skipped testimonial: ${testimonial.name} (already exists)`);
+          }
         },
-      });
-      if (!existing) {
-        await prisma.testimonial.create({
-          data: {
-            name: testimonial.name,
-            role: testimonial.role,
-            content: testimonial.content,
-            avatar: testimonial.avatar,
-          },
-        });
-        log(`Seeded testimonial: ${testimonial.name}`);
-      } else {
-        log(`Skipped testimonial: ${testimonial.name} (already exists)`);
-      }
+        `Testimonial for ${testimonial.name}`
+      );
     }
     log(`Seeded testimonials successfully.`);
 
@@ -1283,10 +1347,22 @@ async function main() {
 
 main()
   .catch((e) => {
-    log(`Seeding failed: ${e}`, 'error');
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    log(`Seeding failed: ${errorMessage}`, 'error');
+
+    // Provide helpful troubleshooting information
+    if (errorMessage.includes('TLS') || errorMessage.includes('ECONNREFUSED')) {
+      log('Troubleshooting: Check your DATABASE_URL and network connectivity.', 'error');
+      log('Make sure your PostgreSQL server is running and accessible.', 'error');
+    }
+
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
-    log("Database connection closed.");
+    try {
+      await prisma.$disconnect();
+      log("Database connection closed.");
+    } catch (disconnectError) {
+      log(`Error closing database connection: ${disconnectError}`, 'error');
+    }
   });

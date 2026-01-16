@@ -74,7 +74,7 @@ export function LoginForm({
       {
         email: data.email,
         password: data.password,
-        // callbackURL: safeRedirectUrl,
+        callbackURL: safeRedirectUrl,
       },
       {
         onRequest: () => {

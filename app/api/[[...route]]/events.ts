@@ -118,14 +118,11 @@ const app = new Hono()
         })),
       };
 
-      return c.json(
-        { event: safeEvent },
-        {
-          headers: {
-            "Cache-Control": "public, max-age=600", // Cache for 10 minutes
-          },
-        }
-      );
+      return c.json(safeEvent, {
+        headers: {
+          "Cache-Control": "public, max-age=600", // Cache for 10 minutes
+        },
+      });
     }
   )
   .onError((error, c) => handleApiError(c, error));

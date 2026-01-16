@@ -6,7 +6,6 @@ import { Logger } from "@/lib/logger";
 // Protected routes requiring authentication
 const protectedRoutes = [
   /^\/dashboard/,
-  /^\/events\/[^\/]+$/,
   /^\/my-events/,
   /^\/my-events\/[^\/]+$/,
   /^\/user\//,

@@ -90,7 +90,8 @@ export default function EditEventPage() {
     );
   }
 
-  const event = data && 'event' in data ? data.event : null;
+  // API now returns event directly
+  const event = data && !('error' in data) ? data : null;
 
   if (!event) {
     return (

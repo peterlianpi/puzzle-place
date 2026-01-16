@@ -13,10 +13,45 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/theme/theme-toggle";
-import { Menu, X, Trophy, User, Settings, LogOut } from "lucide-react";
+import { Menu, X, Trophy, User, Settings, LogOut, Gamepad2, BarChart3, Plus, Calendar } from "lucide-react";
 import { useState } from "react";
 import { useAuthStatus } from "@/features/auth/api/use-auth-status";
 import { authClient } from "@/lib/auth/auth-client";
+
+// Navigation configuration
+type NavItem = {
+  href: string;
+  label: string;
+  icon: any;
+  hasDropdown?: boolean;
+};
+
+const publicNavItems: NavItem[] = [
+  { href: "/", label: "Home", icon: null },
+  { href: "/events", label: "Events", icon: null },
+  { href: "/leaderboard", label: "Leaderboard", icon: BarChart3 },
+];
+
+const authenticatedNavItems: NavItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: Settings },
+  { href: "/my-events", label: "My Events", icon: Calendar, hasDropdown: true },
+  { href: "/events", label: "Events", icon: Gamepad2 },
+  { href: "/leaderboard", label: "Leaderboard", icon: BarChart3 },
+];
+
+const publicMobileItems = [
+  { href: "/", label: "Home" },
+  { href: "/events", label: "Events" },
+  { href: "/leaderboard", label: "Leaderboard" },
+];
+
+const authenticatedMobileItems = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/my-events", label: "View My Events" },
+  { href: "/events/create", label: "Create Event" },
+  { href: "/events", label: "Browse Events" },
+  { href: "/leaderboard", label: "Leaderboard" },
+];
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,6 +76,10 @@ export function Navbar() {
     return "U";
   };
 
+  // Get navigation items based on auth state
+  const navItems = isAuthenticated ? authenticatedNavItems : publicNavItems;
+  const mobileItems = isAuthenticated ? authenticatedMobileItems : publicMobileItems;
+
   return (
     <header className="bg-background h-16 sticky top-0 z-50 flex w-full items-center border-b">
       <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
@@ -53,52 +92,52 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link
-            href="/"
-            className={`text-sm font-medium transition-colors ${
-              isActive("/") ? "text-primary" : "hover:text-primary"
-            }`}
-          >
-            Home
-          </Link>
-          <Link
-            href="/events"
-            className={`text-sm font-medium transition-colors ${
-              isActive("/events") ? "text-primary" : "hover:text-primary"
-            }`}
-          >
-            Events
-          </Link>
-          {isAuthenticated && (
-            <Link
-              href="/events/create"
-              className={`text-sm font-medium transition-colors ${
-                isActive("/events/create")
-                  ? "text-primary"
-                  : "hover:text-primary"
-              }`}
-            >
-              Create
-            </Link>
-          )}
-          <Link
-            href="/leaderboard"
-            className={`text-sm font-medium transition-colors ${
-              isActive("/leaderboard") ? "text-primary" : "hover:text-primary"
-            }`}
-          >
-            Leaderboard
-          </Link>
-          {isAuthenticated && (
-            <Link
-              href="/dashboard"
-              className={`text-sm font-medium transition-colors ${
-                isActive("/dashboard") ? "text-primary" : "hover:text-primary"
-              }`}
-            >
-              Dashboard
-            </Link>
-          )}
+          {navItems.map((item) => {
+            if (item.hasDropdown) {
+              return (
+                <DropdownMenu key={item.href}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={`text-sm font-medium transition-colors flex items-center gap-2 ${
+                        isActive(item.href) ? "text-primary" : "hover:text-primary"
+                      }`}
+                    >
+                      {item.icon && <item.icon className="h-4 w-4" />}
+                      {item.label}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link href="/my-events" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        View My Events
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/events/create" className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Create Event
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`text-sm font-medium transition-colors flex items-center gap-2 ${
+                  isActive(item.href) ? "text-primary" : "hover:text-primary"
+                }`}
+              >
+                {item.icon && <item.icon className="h-4 w-4" />}
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -191,73 +230,36 @@ export function Navbar() {
             </Button>
           </div>
           <nav className="flex flex-col px-4 pb-4 space-y-2">
-            <Link
-              href="/"
-              className={`text-sm font-medium transition-colors py-2 ${
-                isActive("/") ? "text-primary" : "hover:text-primary"
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              Home
-            </Link>
-            <Link
-              href="/events"
-              className={`text-sm font-medium transition-colors py-2 ${
-                isActive("/events") ? "text-primary" : "hover:text-primary"
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              Events
-            </Link>
-            {isAuthenticated && (
+            {mobileItems.map((item) => (
               <Link
-                href="/events/create"
+                key={item.href}
+                href={item.href}
                 className={`text-sm font-medium transition-colors py-2 ${
-                  isActive("/events/create")
-                    ? "text-primary"
-                    : "hover:text-primary"
+                  isActive(item.href) ? "text-primary" : "hover:text-primary"
                 }`}
                 onClick={() => setIsOpen(false)}
               >
-                Create
+                {item.label}
               </Link>
-            )}
-            <Link
-              href="/leaderboard"
-              className={`text-sm font-medium transition-colors py-2 ${
-                isActive("/leaderboard") ? "text-primary" : "hover:text-primary"
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              Leaderboard
-            </Link>
-            {isAuthenticated && (
-              <Link
-                href="/dashboard"
-                className={`text-sm font-medium transition-colors py-2 ${
-                  isActive("/dashboard") ? "text-primary" : "hover:text-primary"
-                }`}
-                onClick={() => setIsOpen(false)}
-              >
-                Dashboard
-              </Link>
-            )}
+            ))}
             {!isAuthenticated && (
               <>
-                <Link
-                  href="/auth/login"
-                  className="text-sm font-medium hover:text-primary transition-colors py-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  className="text-sm font-medium hover:text-primary transition-colors py-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Sign up
-                </Link>
+                <div className="border-t pt-2 mt-2">
+                  <Link
+                    href="/auth/login"
+                    className="text-sm font-medium hover:text-primary transition-colors py-2 block"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="text-sm font-medium hover:text-primary transition-colors py-2 block"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Sign up
+                  </Link>
+                </div>
               </>
             )}
           </nav>

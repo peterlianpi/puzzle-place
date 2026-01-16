@@ -60,7 +60,7 @@ const GameEventDetailPage: React.FC = React.memo(() => {
     if (data && !("error" in data)) {
       const checkOwnership = async () => {
         const session = await authClient.getSession();
-        if (session?.data?.user?.id === data.event.CreatorUserID) {
+        if (session?.data?.user?.id === data.CreatorUserID) {
           setIsOwner(true);
         }
       };
@@ -158,7 +158,8 @@ const GameEventDetailPage: React.FC = React.memo(() => {
     );
   }
 
-  const event: GameEvent = data.event;
+  // API now returns event directly
+  const event: GameEvent = data;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">

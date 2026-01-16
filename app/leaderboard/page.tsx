@@ -1,26 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useInView } from "react-intersection-observer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Medal, Award, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trophy, Medal, Award } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useGetLeaderboard } from "@/features/leaderboard/api/use-get-leaderboard";
 
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_LOAD = 50;
 
 export default function LeaderboardPage() {
   const [sortBy, setSortBy] = useState<"date" | "prize">("prize");
-  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data, isLoading, error } = useGetLeaderboard(1000, 0); // Get all for now
+  const {
+    allLeaderboard,
+    isLoading,
+    isFetchingNextPage,
+    error,
+    fetchNextPage,
+    hasNextPage
+  } = useGetLeaderboard(ITEMS_PER_LOAD);
 
-  const leaderboard = data?.leaderboard || [];
+  // Intersection observer for infinite scroll
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: "100px",
+  });
 
-  const sortedLeaderboard = [...leaderboard]
+  // Load more when the sentinel element comes into view
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const sortedLeaderboard = [...allLeaderboard]
     .filter(entry => entry.prizeWon !== '$0' && entry.prizeWon !== 'Blank')
     .sort((a, b) => {
       if (sortBy === "prize") {
@@ -30,10 +48,6 @@ export default function LeaderboardPage() {
       }
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
-
-  const totalPages = Math.ceil(sortedLeaderboard.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedData = sortedLeaderboard.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   if (isLoading) {
     return (
@@ -102,7 +116,7 @@ export default function LeaderboardPage() {
           <CardContent>
             {/* Mobile Card View */}
             <div className="md:hidden space-y-4">
-              {paginatedData.map((entry) => (
+              {sortedLeaderboard.map((entry) => (
                 <Card key={entry.rank} className="border">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -145,7 +159,7 @@ export default function LeaderboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedData.map((entry) => (
+                  {sortedLeaderboard.map((entry) => (
                     <TableRow key={entry.rank}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
@@ -175,35 +189,35 @@ export default function LeaderboardPage() {
               </Table>
             </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between mt-6">
-              <p className="text-sm text-muted-foreground">
-                Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, sortedLeaderboard.length)} of {sortedLeaderboard.length} entries
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-                <span className="text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+            {/* Infinite scroll indicators */}
+            {hasNextPage && (
+              <div
+                ref={ref}
+                className="flex justify-center items-center py-8 mt-6"
+              >
+                {isFetchingNextPage ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    Loading more winners...
+                  </div>
+                ) : (
+                  <div className="text-muted-foreground text-sm">
+                    Scroll down to load more winners
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
+            {!hasNextPage && sortedLeaderboard.length > 0 && (
+              <div className="text-center py-8 mt-6 text-muted-foreground">
+                <p className="text-sm">
+                  Showing {sortedLeaderboard.length} winners
+                </p>
+                {!hasNextPage && sortedLeaderboard.length >= 50 && (
+                  <p className="text-xs mt-1">You've reached the end!</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

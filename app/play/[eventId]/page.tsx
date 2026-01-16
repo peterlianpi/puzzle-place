@@ -3,7 +3,6 @@
 import { useParams } from "next/navigation";
 import { useGetEvent } from "@/features/events/api/use-get-event";
 import { useGameplay } from "@/features/gameplay/hooks/use-gameplay";
-import { useSaveGameHistory } from "@/features/gameplay/api/use-save-game-history";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,16 +23,16 @@ export default function GameplayPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 
   const { data, isLoading, error } = useGetEvent(eventId);
-  const saveHistory = useSaveGameHistory();
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push("/auth/login?next=/play/" + eventId);
+      router.push("/auth/login?redirect=/play/" + eventId);
     }
   }, [isAuthenticated, authLoading, router, eventId]);
 
-  const gameEvent = data && 'event' in data ? data.event : null;
+  // API now returns event directly
+  const gameEvent = data && !('error' in data) ? data : null;
   const prizes = gameEvent?.prizePools.map(prize => ({
     ...prize,
     PrizeValue: Number(prize.PrizeValue),
@@ -48,18 +47,6 @@ export default function GameplayPage() {
     declineOffer,
     finalSwap,
   } = useGameplay(prizes, eventId);
-
-  // Save history when game finishes
-  useEffect(() => {
-    if (gameState.phase === 'finished' && gameState.wonPrize) {
-      const prizeValue = Number(gameState.wonPrize.PrizeValue);
-      saveHistory.mutate({
-        eventId,
-        wonPrizeName: gameState.wonPrize.PrizeName,
-        wonPrizeValue: gameState.wonPrize.IsBlank ? undefined : prizeValue,
-      });
-    }
-  }, [gameState.phase, gameState.wonPrize, eventId, saveHistory]);
 
   if (isLoading) {
     return (
