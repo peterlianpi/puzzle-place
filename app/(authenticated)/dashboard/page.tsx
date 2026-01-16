@@ -1,9 +1,6 @@
 "use client";
 
-import { redirect } from "next/navigation";
-import { useAuthStatus } from "@/features/auth/api/use-auth-status";
-import { Navbar } from "@/components/Navbar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,11 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import {
   Trophy,
-  Calendar,
-  Users,
   Plus,
-  Edit,
-  Trash2,
   AlertCircle,
   Gamepad2,
 } from "lucide-react";
@@ -24,7 +17,6 @@ import { useGetGameEvents } from "@/features/my-events/api/use-get-game-events";
 import { useGetHistory } from "@/features/profile/api/use-get-history";
 import { MorphicEventCard } from "@/components/dashboard/MorphicEventCard";
 import { AdaptiveTabs } from "@/components/dashboard/AdaptiveTabs";
-import { MorphicBackground } from "@/components/dashboard/MorphicBackground";
 
 
 
@@ -34,32 +26,12 @@ import { MorphicBackground } from "@/components/dashboard/MorphicBackground";
 
 
 export default function DashboardPage() {
-  const { isAuthenticated, user, isLoading } = useAuthStatus();
   const { data: events, isLoading: eventsLoading, error: eventsError } = useGetGameEvents();
   const { data: history, isLoading: historyLoading, error: historyError } = useGetHistory();
 
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Navbar />
-        <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    redirect("/auth/login?next=/dashboard");
-  }
-
-
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <MorphicBackground />
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-2">
@@ -110,20 +82,15 @@ export default function DashboardPage() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {(events && 'events' in events ? events.events || [] : [])
-                        .sort((a, b) => {
-                          const aAccess = parseInt(localStorage.getItem(`event-${a.EventID}-access`) || '0');
-                          const bAccess = parseInt(localStorage.getItem(`event-${b.EventID}-access`) || '0');
-                          return bAccess - aAccess; // Most accessed first
-                        })
                         .map((event) => (
-                        <MorphicEventCard
-                          key={event.EventID}
-                          event={event}
-                          onView={() => {}}
-                          onEdit={() => {}}
-                          onDelete={() => {}}
-                        />
-                      )) || []}
+                          <MorphicEventCard
+                            key={event.EventID}
+                            event={event}
+                            onView={() => { }}
+                            onEdit={() => { }}
+                            onDelete={() => { }}
+                          />
+                        )) || []}
                       {((!events || !('events' in events) || (events.events?.length || 0) === 0)) && (
                         <div className="col-span-full text-center py-12">
                           <Trophy className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
@@ -242,7 +209,6 @@ export default function DashboardPage() {
           defaultValue="events"
           className="space-y-6"
         />
-      </div>
     </div>
   );
 }

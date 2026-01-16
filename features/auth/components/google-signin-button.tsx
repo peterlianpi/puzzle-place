@@ -22,10 +22,11 @@ export function GoogleSignInButton({
   redirectTo,
 }: GoogleSignInButtonProps) {
   const handleGoogleSignIn = async () => {
+    const safeRedirectUrl = redirectTo && !redirectTo.startsWith("/auth/") ? redirectTo : "/dashboard";
     await authClient.signIn.social(
       {
         provider: "google",
-        ...(redirectTo && { redirectTo }),
+        callbackURL: safeRedirectUrl,
       },
       {
         onRequest: () => {
@@ -39,7 +40,8 @@ export function GoogleSignInButton({
           setError(ctx.error.message || errorMessage);
         },
         onSuccess: () => {
-          // Google OAuth handles redirect automatically
+          // Manual redirect for Google sign-in
+          window.location.href = safeRedirectUrl;
         },
       }
     );

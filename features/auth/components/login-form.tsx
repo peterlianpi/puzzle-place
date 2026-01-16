@@ -69,7 +69,9 @@ export function LoginForm({
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     // Prevent redirecting to auth pages after login
-    const safeRedirectUrl = redirectUrl && !redirectUrl.startsWith("/auth/") ? redirectUrl : "/dashboard";
+    const safeRedirectUrl = redirectUrl
+      // && !redirectUrl.startsWith("/auth/") 
+      ? redirectUrl : "/dashboard";
     await authClient.signIn.email(
       {
         email: data.email,
@@ -86,6 +88,10 @@ export function LoginForm({
         },
         onError: (ctx) => {
           setError(ctx.error.message || "Login failed. Please try again.");
+        },
+        onSuccess: () => {
+          // Manually handle redirect since callbackURL might not work as expected
+          window.location.href = safeRedirectUrl;
         },
       }
     );
@@ -189,11 +195,10 @@ export function LoginForm({
           <FieldDescription className="px-6 text-center">
             Don&apos;t have an account?{" "}
             <Link
-              href={`/auth/signup${
-                redirectUrl
+              href={`/auth/signup${redirectUrl
                   ? `?redirect=${encodeURIComponent(redirectUrl)}`
                   : ""
-              }`}
+                }`}
               className="underline underline-offset-4 hover:underline"
             >
               Sign up

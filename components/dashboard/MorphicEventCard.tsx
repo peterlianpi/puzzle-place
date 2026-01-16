@@ -33,18 +33,24 @@ interface MorphicEventCardProps {
 export function MorphicEventCard({ event, onView, onEdit, onDelete }: MorphicEventCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [accessCount, setAccessCount] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Track usage in localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(`event-${event.EventID}-access`);
-    const count = stored ? parseInt(stored, 10) : 0;
-    setAccessCount(count);
+    setIsMounted(true);
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(`event-${event.EventID}-access`);
+      const count = stored ? parseInt(stored, 10) : 0;
+      setAccessCount(count);
+    }
   }, [event.EventID]);
 
   const handleView = () => {
     const newCount = accessCount + 1;
     setAccessCount(newCount);
-    localStorage.setItem(`event-${event.EventID}-access`, newCount.toString());
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`event-${event.EventID}-access`, newCount.toString());
+    }
     onView();
   };
 

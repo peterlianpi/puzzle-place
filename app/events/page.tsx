@@ -182,7 +182,7 @@ export default function PublicEventsPage() {
                 Showing {filteredEvents.length} of {totalCount} events
               </p>
               {!hasNextPage && totalCount > 20 && (
-                <p className="text-xs mt-1">You've reached the end!</p>
+                <p className="text-xs mt-1">You&apos;ve reached the end!</p>
               )}
             </div>
           )}

@@ -9,6 +9,7 @@ const CreateEventForm = lazy(
 );
 
 export default function EditEventPage() {
+  
   const params = useParams();
   const id = params.id as string;
   const { data, isLoading, error } = useGetGameEvent(id);

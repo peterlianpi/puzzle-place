@@ -214,7 +214,7 @@ export default function LeaderboardPage() {
                   Showing {sortedLeaderboard.length} winners
                 </p>
                 {!hasNextPage && sortedLeaderboard.length >= 50 && (
-                  <p className="text-xs mt-1">You've reached the end!</p>
+                  <p className="text-xs mt-1">You&apos;ve reached the end!</p>
                 )}
               </div>
             )}
