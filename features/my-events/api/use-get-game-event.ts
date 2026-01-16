@@ -8,7 +8,7 @@ type ResponseType = InferResponseType<
 
 export const useGetGameEvent = (id: string) => {
   const query = useQuery<ResponseType>({
-    queryKey: ["my-events", id],
+    queryKey: ["my-event", id],
     queryFn: async () => {
       const response = await client.api["my-events"][":id"]["$get"]({
         param: { id },

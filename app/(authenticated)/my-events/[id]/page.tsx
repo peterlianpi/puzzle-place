@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ArrowLeft, Edit, Trash2, Calendar, User, Trophy, AlertCircle, DollarSign, Settings, Trash, Wifi, WifiOff } from "lucide-react";
 import { authClient } from "@/lib/auth/auth-client";
 import { toast } from "sonner";
-import { useGetEvent } from "@/features/events/api/use-get-event";
+import { useGetGameEvent } from "@/features/my-events/api/use-get-game-event";
 import { useDeleteGameEvent } from "@/features/my-events/api/use-delete-game-event";
 import { useWebSocket } from "@/lib/hooks/use-websocket";
 const AttendeeList = React.lazy(() => import("@/features/my-events/components/AttendeeList").then(module => ({ default: module.AttendeeList })));
@@ -38,7 +38,7 @@ const GameEventDetailPage: React.FC = React.memo(() => {
   const params = useParams();
   const router = useRouter();
   const eventId = params.id as string;
-  const { data, isLoading, refetch } = useGetEvent(eventId);
+  const { data, isLoading, refetch } = useGetGameEvent(eventId);
   const deleteMutation = useDeleteGameEvent();
   const [isOwner, setIsOwner] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -60,7 +60,7 @@ const GameEventDetailPage: React.FC = React.memo(() => {
     if (data && !("error" in data)) {
       const checkOwnership = async () => {
         const session = await authClient.getSession();
-        if (session?.data?.user?.id === data.CreatorUserID) {
+        if (session?.data?.user?.id === data.event.CreatorUserID) {
           setIsOwner(true);
         }
       };
@@ -158,8 +158,8 @@ const GameEventDetailPage: React.FC = React.memo(() => {
     );
   }
 
-  // API now returns event directly
-  const event: GameEvent = data;
+  // API returns { event: GameEvent }
+  const event: GameEvent = data.event;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -315,7 +315,7 @@ const GameEventDetailPage: React.FC = React.memo(() => {
                       Actions
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="flex flex-col w-full space-y-3">
                     <Link href={`/my-events/${eventId}/edit`}>
                       <Button className="w-full shadow-md hover:shadow-lg transition-all duration-200" variant="outline">
                         <Edit className="h-4 w-4 mr-2" />

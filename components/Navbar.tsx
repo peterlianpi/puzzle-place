@@ -13,29 +13,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/theme/theme-toggle";
-import { Menu, X, Trophy, User, Settings, LogOut, Gamepad2, BarChart3, Plus, Calendar, ChevronDown, ChevronRight } from "lucide-react";
+import { Menu, X, Trophy, User, Settings, LogOut, Gamepad2, BarChart3, Plus, Calendar, ChevronDown, ChevronRight, LucideIcon } from "lucide-react";
 import { useState } from "react";
-import { useAuthStatus } from "@/features/auth/api/use-auth-status";
 import { authClient } from "@/lib/auth/auth-client";
 
 // Navigation configuration
 type NavItem = {
   href: string;
   label: string;
-  icon?: any;
-  hasDropdown?: boolean;
-};
-
-type MobileItem = {
-  href: string;
-  label: string;
-  icon?: any;
+  icon?: LucideIcon;
   hasDropdown?: boolean;
 };
 
 const publicNavItems: NavItem[] = [
-  { href: "/", label: "Home", icon: null },
-  { href: "/events", label: "Events", icon: null },
+  { href: "/", label: "Home", icon: undefined },
+  { href: "/events", label: "Events", icon: undefined },
   { href: "/leaderboard", label: "Leaderboard", icon: BarChart3 },
 ];
 
@@ -135,7 +127,7 @@ export function Navbar() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/events/create" className="flex items-center gap-2">
+                      <Link href="/my-events/create-event" className="flex items-center gap-2">
                         <Plus className="h-4 w-4" />
                         Create Event
                       </Link>
@@ -176,7 +168,7 @@ export function Navbar() {
                       alt={user.name || ""}
                     />
                     <AvatarFallback>
-                       {user.name?.charAt(0)?.toUpperCase() || "U"}
+                      {user.name?.charAt(0)?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -187,7 +179,7 @@ export function Navbar() {
                     <p className="text-sm font-medium leading-none">
                       {user.name}
                     </p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <p className="text-xs leading-none text-muted-foreground truncate">
                       {user.email}
                     </p>
                   </div>
@@ -251,9 +243,8 @@ export function Navbar() {
                   <div key={item.href}>
                     <button
                       onClick={() => setMobileDropdownOpen(isDropdownOpen ? null : item.href)}
-                      className={`flex items-center justify-between w-full text-left text-sm font-medium transition-colors py-2 px-2 rounded-md hover:bg-muted ${
-                        isActive(item.href) ? "text-primary" : "hover:text-primary"
-                      }`}
+                      className={`flex items-center justify-between w-full text-left text-sm font-medium transition-colors py-2 px-2 rounded-md hover:bg-muted ${isActive(item.href) ? "text-primary" : "hover:text-primary"
+                        }`}
                     >
                       <span className="flex items-center gap-2">
                         {'icon' in item && item.icon && <item.icon className="h-4 w-4" />}
@@ -269,9 +260,8 @@ export function Navbar() {
                       <div className="ml-6 mt-1 space-y-1">
                         <Link
                           href="/my-events"
-                          className={`flex items-center gap-2 text-sm font-medium transition-colors py-2 px-2 rounded-md hover:bg-muted ${
-                            isActive("/my-events") ? "text-primary" : "hover:text-primary"
-                          }`}
+                          className={`flex items-center gap-2 text-sm font-medium transition-colors py-2 px-2 rounded-md hover:bg-muted ${isActive("/my-events") ? "text-primary" : "hover:text-primary"
+                            }`}
                           onClick={() => {
                             setIsOpen(false);
                             setMobileDropdownOpen(null);
@@ -281,10 +271,9 @@ export function Navbar() {
                           View My Events
                         </Link>
                         <Link
-                          href="/events/create"
-                          className={`flex items-center gap-2 text-sm font-medium transition-colors py-2 px-2 rounded-md hover:bg-muted ${
-                            isActive("/events/create") ? "text-primary" : "hover:text-primary"
-                          }`}
+                          href="/my-events/create-event"
+                          className={`flex items-center gap-2 text-sm font-medium transition-colors py-2 px-2 rounded-md hover:bg-muted ${isActive("/my-events/create-event") ? "text-primary" : "hover:text-primary"
+                            }`}
                           onClick={() => {
                             setIsOpen(false);
                             setMobileDropdownOpen(null);
@@ -303,9 +292,8 @@ export function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`text-sm font-medium transition-colors py-2 px-2 rounded-md hover:bg-muted ${
-                    isActive(item.href) ? "text-primary" : "hover:text-primary"
-                  }`}
+                  className={`text-sm font-medium transition-colors py-2 px-2 rounded-md hover:bg-muted ${isActive(item.href) ? "text-primary" : "hover:text-primary"
+                    }`}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
