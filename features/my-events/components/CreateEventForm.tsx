@@ -31,10 +31,12 @@ import {
   ChevronUp,
   AlertCircle,
   CheckCircle2,
-  Info
+  Info,
+  ArrowLeft
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 const prizeSchema = z.object({
   name: z.string().min(1, "Prize name is required"),
@@ -81,10 +83,10 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
     description: "",
     prizes: [
       { name: "Grand Prize", value: 100, isBlank: false },
-      { name: "Second Prize", value: 50, isBlank: false },
-      { name: "", value: 0, isBlank: true },
-      { name: "", value: 0, isBlank: true },
-      { name: "", value: 0, isBlank: true },
+      { name: "Second Prize", value: 80, isBlank: false },
+      { name: "Third Price", value: 60, isBlank: false },
+      { name: "Fourth Price", value: 40, isBlank: false },
+      { name: "Fifth Price", value: 0, isBlank: true },
     ],
   };
 
@@ -264,9 +266,8 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <Card className={`border transition-all duration-200 ${
-                            isValid ? 'border-border' : 'border-destructive/50 bg-destructive/5'
-                          }`}>
+                          <Card className={`border transition-all duration-200 ${isValid ? 'border-border' : 'border-destructive/50 bg-destructive/5'
+                            }`}>
                             <CardHeader className="pb-3">
                               <div className="flex items-center justify-between">
                                 <CardTitle className="text-lg flex items-center gap-2">
@@ -406,11 +407,11 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
         )}
 
         {/* Submit Button */}
-        <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t pt-4 -mx-6 px-6">
+        <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t pt-4 -mx-6 px-6 mb-3">
           <Button
             type="submit"
             disabled={!isFormValid || createEvent.isPending || updateEvent.isPending}
-            className="w-full h-12 text-base font-medium"
+            className="w-full h-12 mt-4 text-base font-medium"
             size="lg"
           >
             {mode === 'create' ? (
@@ -439,6 +440,14 @@ export default function CreateEventForm({ mode, event }: GameEventFormProps) {
               )
             )}
           </Button>
+
+          <Link href="/my-events" className="block mt-2">
+            <Button className="w-full h-12 text-base font-medium" variant="outline" size="lg">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to My Events
+            </Button>
+          </Link>
+
         </div>
       </form>
     </Form>

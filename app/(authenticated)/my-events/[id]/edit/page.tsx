@@ -9,7 +9,7 @@ const CreateEventForm = lazy(
 );
 
 export default function EditEventPage() {
-  
+
   const params = useParams();
   const id = params.id as string;
   const { data, isLoading, error } = useGetGameEvent(id);
@@ -70,7 +70,7 @@ export default function EditEventPage() {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-6 md:space-y-8 p-2">
       <Suspense
         fallback={
           <div className="flex justify-center items-center">
@@ -78,7 +78,9 @@ export default function EditEventPage() {
           </div>
         }
       >
+
         <CreateEventForm mode="update" event={eventForForm} />
+
       </Suspense>
     </div>
   );
