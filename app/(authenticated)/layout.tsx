@@ -1,3 +1,4 @@
+import { Navbar } from "@/components/Navbar";
 import { MainLayout } from "@/components/sidebar/MainLayout";
 
 export default function ProtectedLayout({
@@ -5,5 +6,5 @@ export default function ProtectedLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <MainLayout>{children}</MainLayout>;
+  return <><Navbar />{children}</>;
 }
