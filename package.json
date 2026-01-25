@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"bun run dev:next\" \"bun run ws:start\"",
     "dev:next": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "postinstall": "bun prisma generate",
     "start": "next start",
     "lint": "eslint",
