@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"bun run dev:next\" \"bun run ws:start\"",
-    "dev:next": "next dev",
+    "dev:next": "next dev --webpack",
     "build": "next build --webpack",
     "postinstall": "bun prisma generate",
     "start": "next start",
