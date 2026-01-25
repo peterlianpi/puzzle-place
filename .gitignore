@@ -45,3 +45,4 @@ next-env.d.ts
 /seeds/*
 docs/PROJECT_INFO.md
 docs/SECURITY_PERFORMANCE_UPDATES.md
+.env
